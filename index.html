@@ -11,6 +11,15 @@
     <div>
       <h2>データ変換</h2>
       <!-- <p>Excelデータを貼り付けて、LaTeXまたはCSVに素早く変換</p> -->
+      <label for="significant-figures" style="margin-right:8px;">桁数:</label>
+      <select id="significant-figures" name="significant-figures">
+        <option value="none" selected>none</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" >3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
       <textarea id="excel-data-input" rows="10" style="width: 100%;" placeholder="Excelからコピーしたデータをここに貼り付けてください..."></textarea>
       <br><br>
       <button id="generate-btn">表を生成</button>
@@ -26,7 +35,7 @@
   <h3>CSV</h3>
   <textarea id="csv-output" rows="15" style="width: 100%;" readonly></textarea>
   <br><br>
-  <button id="download-csv-btn">CSVファイルをダウンロード</button>
+  <button id="download-csv-btn">CSVファイルをダウンロードする</button>
 </div>
 
 <script src="script.js"></script>

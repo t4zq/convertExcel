@@ -7,7 +7,7 @@ const csvOutputSection = document.getElementById('csv-output-section');
 const latexOutput = document.getElementById('latex-output');
 const csvOutput = document.getElementById('csv-output');
 const downloadCsvBtn = document.getElementById('download-csv-btn');
-
+const significantFiguresSelect = document.getElementById('significant-figures');
 /**
  * @param {string} inputData - 貼り付けられたテキストデータ
  * @returns {Array<Array<string>>} 解析されたデータ配列
@@ -21,15 +21,15 @@ function parseExcelData(inputData) {
     
     // 最初のパスで有効な行のみを処理し、最大列数を取得
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = lines[i].trim(); // trimで前後の空白を削除
       if (line) {
         let row;
-        if (line.indexOf('\t') !== -1) {
+        if (line.indexOf('\t') !== -1) { // タブ区切り(indexOf:\tが見つからなかったとき-1を返す→1でない場合は処理実行)
           row = line.split('\t');
-        } else if (line.indexOf(',') !== -1) {
+        } else if (line.indexOf(',') !== -1) { // カンマ区切り
           row = line.split(',');
         } else {
-          row = line.split(/\s+/);
+          row = line.split(/\s+/); //テキストエリアに張り付けた後そのデータを弄る可能性を考慮してスペース区切りも対応
         }
         
         // セルのトリムを効率的に処理
