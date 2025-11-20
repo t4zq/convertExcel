@@ -5,179 +5,87 @@
 #include <cctype>
 #include <cstring>
 #include <cstdlib>
-#include <cstdio>
-
 #include <emscripten/emscripten.h>
 
-static inline void trim_inplace(std::string &s) {
-  size_t start = 0;
-  while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start]))) start++;
-  size_t end = s.size();
-  while (end > start && std::isspace(static_cast<unsigned char>(s[end - 1]))) end--;
-  if (start == 0 && end == s.size()) return;
-  s = s.substr(start, end - start);
+void trim(std::string &s) {
+  auto start = s.find_first_not_of(" \t\r\n");
+  auto end = s.find_last_not_of(" \t\r\n");
+  s = (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
 }
 
-static std::vector<std::string> split_line(const std::string &line) {
-  // detect delimiter: tab, comma, otherwise whitespace
-  if (line.find('\t') != std::string::npos) {
-    std::vector<std::string> out;
-    std::string cur;
-    for (char c : line) {
-      if (c == '\t') { out.push_back(cur); cur.clear(); }
-      else { cur.push_back(c); }
-    }
-    out.push_back(cur);
-    return out;
-  } else if (line.find(',') != std::string::npos) {
-    // simple CSV split without quoted CSV parsing (input is pre-Excel copy)
-    std::vector<std::string> out;
-    std::string cur;
-    for (char c : line) {
-      if (c == ',') { out.push_back(cur); cur.clear(); }
-      else { cur.push_back(c); }
-    }
-    out.push_back(cur);
-    return out;
-  } else {
-    // split by contiguous whitespace
-    std::vector<std::string> out;
-    std::string cur;
-    bool inToken = false;
-    for (char ch : line) {
-      if (std::isspace(static_cast<unsigned char>(ch))) {
-        if (inToken) {
-          out.push_back(cur);
-          cur.clear();
-          inToken = false;
-        }
-      } else {
-        cur.push_back(ch);
-        inToken = true;
-      }
-    }
-    if (!cur.empty()) out.push_back(cur);
-    if (out.empty()) out.push_back("");
-    return out;
+std::vector<std::string> split(const std::string &line) {
+  std::vector<std::string> out;
+  std::string cur;
+  char delim = line.find('\t') != std::string::npos ? '\t' : ',';
+  for (char c : line) {
+    if (c == delim) { out.push_back(cur); cur.clear(); }
+    else cur += c;
   }
+  out.push_back(cur);
+  return out;
 }
 
-struct Table {
-  std::vector<std::vector<std::string>> rows;
-  size_t cols = 0;
-};
+typedef std::vector<std::vector<std::string>> Table;
 
-static Table parse_table(const std::string &input) {
+Table parse(const std::string &input) {
   Table t;
-  std::string line;
   std::stringstream ss(input);
+  std::string line;
   while (std::getline(ss, line)) {
-    // keep original line for empty check, but trim for processing
-    std::string trimmed = line;
-    trim_inplace(trimmed);
-    if (trimmed.empty()) continue;
-    std::vector<std::string> cells = split_line(line);
-    for (auto &c : cells) trim_inplace(c);
-    t.cols = std::max(t.cols, cells.size());
-    t.rows.emplace_back(std::move(cells));
-  }
-  // pad to same columns
-  for (auto &r : t.rows) {
-    while (r.size() < t.cols) r.emplace_back("");
+    trim(line);
+    if (line.empty()) continue;
+    auto cells = split(line);
+    for (auto &c : cells) trim(c);
+    t.push_back(cells);
   }
   return t;
 }
 
-static std::string latex_escape(const std::string &s) {
+std::string escape(const std::string &s) {
   std::string out;
-  out.reserve(s.size());
-  for (char ch : s) {
-    switch (ch) {
-      case '&': out += "\\&"; break;
-      case '%': out += "\\%"; break;
-      case '$': out += "\\$"; break;
-      case '#': out += "\\#"; break;
-      case '_': out += "\\_"; break;
-      case '{': out += "\\{"; break;
-      case '}': out += "\\}"; break;
-      default: out += ch; break;
-    }
+  for (char c : s) {
+    if (c == '&' || c == '%' || c == '$' || c == '#' || c == '_' || c == '{' || c == '}') out += '\\';
+    out += c;
   }
   return out;
 }
 
-static std::string to_latex(const Table &t) {
-  if (t.rows.empty() || t.cols == 0) return std::string();
-  std::string colfmt("{");
-  colfmt.append(t.cols, 'c');
-  colfmt.push_back('}');
+std::string to_latex(const Table &t) {
+  if (t.empty()) return "";
+  std::string out = "\\begin{tabular}{" + std::string(t[0].size(), 'c') + "}\n\\hline\n";
+  for (const auto &row : t) {
+    for (size_t i = 0; i < row.size(); ++i) {
+      if (i) out += " & ";
+      out += escape(row[i]);
+    }
+    out += " \\\\\n";
+  }
+  return out + "\\hline\n\\end{tabular}";
+}
 
+std::string to_csv(const Table &t) {
   std::string out;
-  out.reserve(128 * t.rows.size());
-  out += "\\begin{tabular}"; out += colfmt; out += "\n\\hline\n";
-  for (const auto &row : t.rows) {
-    for (size_t j = 0; j < row.size(); ++j) {
-      if (j) out += " & ";
-      out += latex_escape(row[j]);
+  for (size_t i = 0; i < t.size(); ++i) {
+    for (size_t j = 0; j < t[i].size(); ++j) {
+      if (j) out += ',';
+      out += t[i][j];
     }
-    out += " \\\n";
-  }
-  out += "\\hline\n\\end{tabular}";
-  return out;
-}
-
-static std::string csv_quote_cell(const std::string &s) {
-  bool need = s.find(',') != std::string::npos || s.find('\n') != std::string::npos || s.find('"') != std::string::npos;
-  if (!need) return s;
-  std::string out; out.reserve(s.size() + 2);
-  out.push_back('"');
-  for (char ch : s) {
-    if (ch == '"') out += "\"\""; else out += ch;
-  }
-  out.push_back('"');
-  return out;
-}
-
-static std::string to_csv(const Table &t) {
-  std::string out;
-  out.reserve(64 * t.rows.size());
-  for (size_t i = 0; i < t.rows.size(); ++i) {
-    const auto &row = t.rows[i];
-    for (size_t j = 0; j < row.size(); ++j) {
-      if (j) out.push_back(',');
-      out += csv_quote_cell(row[j]);
-    }
-    if (i + 1 < t.rows.size()) out.push_back('\n');
+    if (i + 1 < t.size()) out += '\n';
   }
   return out;
 }
 
-static char* dup_cstr(const std::string &s) {
-  char *p = (char*)std::malloc(s.size() + 1);
-  if (!p) return nullptr;
-  std::memcpy(p, s.data(), s.size());
-  p[s.size()] = '\0';
+char* dup(const std::string &s) {
+  char *p = (char*)malloc(s.size() + 1);
+  memcpy(p, s.c_str(), s.size() + 1);
   return p;
 }
 
 extern "C" {
-
-EMSCRIPTEN_KEEPALIVE
-char* gen_latex(const char* input) {
-  if (!input) return dup_cstr("");
-  Table t = parse_table(std::string(input));
-  if (t.rows.empty()) return dup_cstr("");
-  std::string lt = to_latex(t);
-  return dup_cstr(lt);
+EMSCRIPTEN_KEEPALIVE char* gen_latex(const char* in) {
+  return in ? dup(to_latex(parse(in))) : dup("");
 }
-
-EMSCRIPTEN_KEEPALIVE
-char* gen_csv(const char* input) {
-  if (!input) return dup_cstr("");
-  Table t = parse_table(std::string(input));
-  if (t.rows.empty()) return dup_cstr("");
-  std::string cs = to_csv(t);
-  return dup_cstr(cs);
+EMSCRIPTEN_KEEPALIVE char* gen_csv(const char* in) {
+  return in ? dup(to_csv(parse(in))) : dup("");
 }
-
 }
