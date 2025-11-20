@@ -23,7 +23,7 @@ jobs:
     
     - name: Build WASM
       run: |
-        emcc cpp/convert.cpp -O3 \
+        emcc convert.cpp -O3 \
           -s WASM=1 \
           -s MODULARIZE=1 \
           -s EXPORT_NAME=ConvertModule \
