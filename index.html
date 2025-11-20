@@ -11,7 +11,7 @@
     <div>
       <h2>データ変換</h2>
       <!-- <p>Excelデータを貼り付けて、LaTeXまたはCSVに素早く変換</p> -->
-      <label for="significant-figures" style="margin-right:8px;">桁数:</label>
+      <label for="significant-figures" style="margin-right:8px;">有効数字桁数:</label>
       <select id="significant-figures" name="significant-figures">
         <option value="none" selected>none</option>
         <option value="1">1</option>
@@ -34,10 +34,9 @@
 <div id="csv-output-section" style="display: none;">
   <h3>CSV</h3>
   <textarea id="csv-output" rows="15" style="width: 100%;" readonly></textarea>
-  <br><br>
-  <button id="download-csv-btn">CSVファイルをダウンロードする</button>
 </div>
-
+<!-- WASM (Emscripten) でビルドした出力を先に読み込み -->
+<script src="dist/convert.js"></script>
 <script src="script.js"></script>
 </body>
 
