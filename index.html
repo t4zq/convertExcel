@@ -1,22 +1,184 @@
+HTML
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>データ変換</title>
+<title>データ変換ツール</title>
+<style>
+  /* 基本設定 */
+  :root {
+    --primary-color: #4a90e2;
+    --bg-color: #f5f7fa;
+    --text-color: #333;
+    --card-bg: #ffffff;
+  }
+
+  body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+  }
+
+  h2, h3 {
+    margin-top: 0;
+    color: #2c3e50;
+  }
+
+  /* コンテナ：画面中央に配置し、幅を制限 */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+
+  /* グリッドレイアウト：PCでは左右2カラム、スマホでは縦1カラム */
+  .grid-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .grid-wrapper {
+      grid-template-columns: 1fr; /* スマホ時は1列 */
+    }
+  }
+
+  /* カードデザイン */
+  .card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  /* 入力エリアのデザイン */
+  textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace; /* データは見やすい等幅フォントで */
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box; /* パディングを含めた幅計算 */
+    background: #fafafa;
+    min-height: 150px;
+    flex-grow: 1; /* 枠いっぱいに広げる */
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+  }
+
+  /* ボタンエリア */
+  .action-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px 0;
+    align-items: center;
+  }
+
+  @media (min-width: 769px) {
+     /* PC画面ではボタンを中央の矢印のように配置する場合の調整（今回はシンプルに上部に配置） */
+    .grid-header {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  }
+
+  button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+    width: 100%;
+    max-width: 200px;
+  }
+
+  button:hover {
+    background-color: #357abd;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  button#csv-btn {
+    background-color: #27ae60; /* CSVボタンは色を変える */
+  }
+  
+  button#csv-btn:hover {
+    background-color: #219150;
+  }
+
+  .output-group {
+    margin-bottom: 20px;
+  }
+</style>
 </head>
 <body>
-<h2>データ変換</h2>
-<label for="input">入力データ:</label><br>
-<textarea id="input" rows="8" placeholder="データを貼り付け"></textarea><br>
-<button id="latex-btn">LaTeX</button>
-<button id="csv-btn">CSV</button>
-<h3>LaTeX</h3>
-<label for="latex">LaTeX出力:</label><br>
-<textarea id="latex" rows="8" placeholder="LaTeX形式で出力されます"></textarea>
-<h3>CSV</h3>
-<label for="csv">CSV出力:</label><br>
-<textarea id="csv" rows="8" placeholder="CSV形式で出力されます"></textarea>
+
+<div class="container">
+  <div class="grid-header">
+    <h2>データ変換ツール</h2>
+    <p>テキストデータをLaTeXまたはCSV形式に変換します。</p>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="card">
+      <h3>入力</h3>
+      <label for="input">元データを貼り付け</label>
+      <textarea id="input" placeholder="ここにデータを入力してください..."></textarea>
+      
+      <div class="action-area">
+        <button id="latex-btn">LaTeXへ変換 &rarr;</button>
+        <button id="csv-btn">CSVへ変換 &rarr;</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>出力結果</h3>
+      
+      <div class="output-group">
+        <label for="latex">LaTeX出力</label>
+        <textarea id="latex" placeholder="LaTeX形式の結果がここに表示されます" readonly></textarea>
+      </div>
+      
+      <div class="output-group">
+        <label for="csv">CSV出力</label>
+        <textarea id="csv" placeholder="CSV形式の結果がここに表示されます" readonly></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="dist/convert.js"></script>
 <script src="script.js"></script>
 </body>
