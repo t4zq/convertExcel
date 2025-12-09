@@ -7,9 +7,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<<<<<<< Updated upstream
 <h2>データ変換</h2>
-<label for="input">入力データ:</label>
+<label for="input">入力データ:</label><br
 <textarea id="input" rows="8" placeholder="データを貼り付け"></textarea><br>
 <fieldset>
   <legend>丸め方式を選択:</legend>
@@ -24,46 +23,12 @@
 <button id="latex-btn">LaTeX</button>
 <button id="csv-btn">CSV</button>
 <h3>LaTeX</h3>
-<label for="latex">LaTeX出力:</label>
+<label for="latex">LaTeX出力:</label><br>
 <textarea id="latex" rows="8" placeholder="LaTeX形式で出力されます"></textarea>
 <h3>CSV</h3>
-<label for="csv">CSV出力:</label>
+<label for="csv">CSV出力:</label><br
 <textarea id="csv" rows="8" placeholder="CSV形式で出力されます"></textarea>
 <script src="dist/convert.js"></script>
-=======
-    <!-- <h1>Quick Data Converter</h1> -->
-
-    <div>
-      <h2>データ変換</h2>
-      <!-- <p>Excelデータを貼り付けて、LaTeXまたはCSVに素早く変換</p> -->
-      <label for="significant-figures" style="margin-right:8px;">桁数:</label>
-      <select id="significant-figures" name="significant-figures">
-        <option value="none" selected>none</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3" >3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-      </select>
-      <textarea id="excel-data-input" rows="10" style="width: 100%;" placeholder="Excelからコピーしたデータをここに貼り付けてください..."></textarea>
-      <br><br>
-      <button id="generate-btn">表を生成</button>
-      <button id="generate-csv-btn" style="margin-left: 10px; background-color: #17a2b8;">CSVを生成</button>
-    </div>
-
-<div id="output-section" style="display: none;">
-  <h3>LaTeX</h3>
-  <textarea id="latex-output" rows="15" style="width: 100%;"></textarea>
-</div>
-
-<div id="csv-output-section" style="display: none;">
-  <h3>CSV</h3>
-  <textarea id="csv-output" rows="15" style="width: 100%;" readonly></textarea>
-  <br><br>
-  <button id="download-csv-btn">CSVファイルをダウンロード</button>
-</div>
-
->>>>>>> Stashed changes
 <script src="script.js"></script>
 </body>
 </html>
