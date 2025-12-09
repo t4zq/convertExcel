@@ -41,9 +41,11 @@ jobs:
         git add dist/
         git diff --staged --quiet || git commit -m "Auto-build WASM files"
         
-        # Push to the correct branch
+        # Pull latest changes before pushing
         if [ "${{ github.event_name }}" = "pull_request" ]; then
+          git pull --rebase origin ${{ github.head_ref }}
           git push origin HEAD:refs/heads/${{ github.head_ref }}
         else
+          git pull --rebase origin ${{ github.ref_name }}
           git push origin HEAD:refs/heads/${{ github.ref_name }}
         fi
