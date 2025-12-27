@@ -1,8 +1,12 @@
 const input = document.getElementById('input');
 const latex = document.getElementById('latex');
 const csv = document.getElementById('csv');
+const tikz = document.getElementById('tikz');
 const decimals = document.getElementById('decimals');
 const sigFigs = document.getElementById('sig-figs');
+const filename = document.getElementById('filename');
+const legendPos = document.getElementById('legend-pos');
+const scaleMode = document.getElementById('scale-mode');
 
 ConvertModule().then(M => {
   const call = (ptr) => { const s = M.UTF8ToString(ptr); M._free(ptr); return s; };
@@ -12,6 +16,7 @@ ConvertModule().then(M => {
   const genCsvRounded = M.cwrap('gen_csv_rounded', 'number', ['string', 'number']);
   const genLatexSigFigs = M.cwrap('gen_latex_sig_figs', 'number', ['string', 'number']);
   const genCsvSigFigs = M.cwrap('gen_csv_sig_figs', 'number', ['string', 'number']);
+  const genTikzGraph = M.cwrap('gen_tikz_graph', 'number', ['string', 'string', 'number', 'string', 'string']);
   
   const getRoundMode = () => {
     const selected = document.querySelector('input[name="round-mode"]:checked');
@@ -43,6 +48,17 @@ ConvertModule().then(M => {
       } else {
         csv.value = call(genCsv(data));
       }
+    }
+  };
+  
+  document.getElementById('tikz-btn').onclick = () => {
+    const data = input.value.trim();
+    if (data) {
+      const fname = filename.value.trim() || 'data';
+      const sf = parseInt(sigFigs.value) || 3;
+      const lp = legendPos.value || 'north west';
+      const sm = scaleMode.value || 'linear';
+      tikz.value = call(genTikzGraph(data, fname, sf, lp, sm));
     }
   };
 });

@@ -22,12 +22,35 @@
 <input type="number" id="sig-figs" min="1" value="3"><br>
 <button id="latex-btn">LaTeX</button>
 <button id="csv-btn">CSV</button>
+<button id="tikz-btn">TikZ グラフ</button><br>
+<label for="filename">ファイル名 (TikZ用):</label>
+<input type="text" id="filename" value="data" placeholder="data">
+<label for="legend-pos">凡例位置:</label>
+<select id="legend-pos">
+  <option value="north west">north west</option>
+  <option value="north east">north east</option>
+  <option value="south west">south west</option>
+  <option value="south east">south east</option>
+  <option value="north">north</option>
+  <option value="south">south</option>
+  <option value="east">east</option>
+  <option value="west">west</option>
+</select>
+<label for="scale-mode">軸スケール:</label>
+<select id="scale-mode">
+  <option value="linear">線形</option>
+  <option value="semilog">片対数</option>
+  <option value="loglog">両対数</option>
+</select>
 <h3>LaTeX</h3>
 <label for="latex">LaTeX出力:</label><br>
 <textarea id="latex" rows="8" placeholder="LaTeX形式で出力されます"></textarea>
 <h3>CSV</h3>
 <label for="csv">CSV出力:</label><br>
 <textarea id="csv" rows="8" placeholder="CSV形式で出力されます"></textarea>
+<h3>TikZ グラフ</h3>
+<label for="tikz">TikZ グラフ出力:</label><br>
+<textarea id="tikz" rows="15" placeholder="TikZ/PGFPlotsグラフコードが出力されます"></textarea>
 <script src="dist/convert.js"></script>
 <script src="script.js"></script>
 </body>

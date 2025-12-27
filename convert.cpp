@@ -166,6 +166,133 @@ std::string to_csv(const Table &t) {
   return out;
 }
 
+std::string to_tikz_graph(const Table &t, const std::string &filename, int sig_figs, const std::string &legend_pos, const std::string &scale_mode) {
+  if (t.empty()) return "";
+  
+  size_t num_cols = t[0].size();
+  if (num_cols < 2) return ""; // 少なくとも2列必要（x軸とy軸）
+  if (sig_figs < 1) sig_figs = 3;
+  
+  // データの最小値・最大値を計算
+  double x_min = 1e100, x_max = -1e100;
+  double y_min = 1e100, y_max = -1e100;
+  
+  for (const auto &row : t) {
+    if (row.size() >= 2) {
+      // x軸データ（第1列）
+      if (is_number(row[0])) {
+        double x_val = std::stod(row[0]);
+        x_min = std::min(x_min, x_val);
+        x_max = std::max(x_max, x_val);
+      }
+      // y軸データ（第2列以降）
+      for (size_t i = 1; i < row.size(); ++i) {
+        if (is_number(row[i])) {
+          double y_val = std::stod(row[i]);
+          y_min = std::min(y_min, y_val);
+          y_max = std::max(y_max, y_val);
+        }
+      }
+    }
+  }
+  
+  // ガウス記号を適用
+  int xmin_val = (int)std::floor(x_min);
+  int xmax_val = (int)std::floor(x_max) + 1;
+  int ymin_val = (int)std::floor(y_min);
+  int ymax_val = (int)std::floor(y_max) + 1;
+  
+  std::string out = "\\begin{figure}[H]\n";
+  out += "    \\centering\n";
+  out += "    \\begin{tikzpicture}\n";
+  out += "        \\begin{axis}[\n";
+  out += "            width=0.8\\textwidth,\n";
+  out += "            height=0.6\\textwidth,\n";
+  out += "            minor tick num=1,\n";
+  out += "            tick style={major tick length=5pt, minor tick length=3pt, tick pos=both, color=black, line width=0.5pt},\n";
+  out += "            tick align=inside,\n";
+  out += "            xmajorgrids=false,\n";
+  out += "            ymajorgrids=false,\n";
+  out += "            xminorgrids=false,\n";
+  out += "            yminorgrids=false,\n";
+  out += "            axis line style={-},\n";
+  out += "            scaled ticks=false,\n";
+  out += "            xticklabel style={/pgf/number format/fixed},\n";
+  out += "            yticklabel style={/pgf/number format/fixed},\n";
+  out += "            xticklabel style = {/pgf/number format/precision=\"";
+  out += std::to_string(sig_figs);
+  out += "\"},\n";
+  out += "            yticklabel style = {/pgf/number format/precision=\"";
+  out += std::to_string(sig_figs);
+  out += "\"},\n";
+  out += "            legend cell align = {left},\n";
+  out += "            legend pos = ";
+  out += legend_pos;
+  out += ",\n";
+  
+  // スケールモードを設定
+  if (scale_mode == "semilog") {
+    out += "            ymode=log,\n";
+  } else if (scale_mode == "loglog") {
+    out += "            xmode=log,\n";
+    out += "            ymode=log,\n";
+  }
+  
+  out += "            xlabel={x軸},\n";
+  out += "            ylabel={y軸},\n";
+  out += "            xmin=";
+  out += std::to_string(xmin_val);
+  out += ", xmax=";
+  out += std::to_string(xmax_val);
+  out += ",\n";
+  out += "            ymin=";
+  out += std::to_string(ymin_val);
+  out += ", ymax=";
+  out += std::to_string(ymax_val);
+  out += ",\n";
+  
+  // (max-min)/5刻みで目盛りを設定
+  int x_step = (xmax_val - xmin_val) / 5;
+  int y_step = (ymax_val - ymin_val) / 5;
+  if (x_step < 1) x_step = 1;
+  if (y_step < 1) y_step = 1;
+  
+  out += "            xtick={";
+  for (int i = xmin_val; i <= xmax_val; i += x_step) {
+    if (i != xmin_val) out += ",";
+    out += std::to_string(i);
+  }
+  out += "},\n";
+  
+  out += "            ytick={";
+  for (int i = ymin_val; i <= ymax_val; i += y_step) {
+    if (i != ymin_val) out += ",";
+    out += std::to_string(i);
+  }
+  out += "}\n";
+  out += "        ]\n";
+  
+  // 各y列に対してaddplotを生成（列1がx軸、列2以降がy軸）
+  for (size_t i = 1; i < num_cols; ++i) {
+    out += "            \\addplot [smooth, mark=*, draw] table [col sep=comma, x index=0, y index=";
+    out += std::to_string(i);
+    out += "] {";
+    out += filename;
+    out += ".csv};\n";
+    out += "            \\addlegendentry{凡例";
+    out += std::to_string(i);
+    out += "}\n";
+  }
+  
+  out += "        \\end{axis}\n";
+  out += "    \\end{tikzpicture}\n";
+  out += "    \\caption{図題}\n";
+  out += "    \\label{fig:label}\n";
+  out += "\\end{figure}\n";
+  
+  return out;
+}
+
 char* dup(const std::string &s) {
   char *p = (char*)malloc(s.size() + 1);
   memcpy(p, s.c_str(), s.size() + 1);
@@ -184,5 +311,11 @@ EMSCRIPTEN_KEEPALIVE char* gen_latex_rounded(const char* in, int decimals) {
 }
 EMSCRIPTEN_KEEPALIVE char* gen_latex_sig_figs(const char* in, int sig_figs) {
   return in ? dup(to_latex_sig_figs(parse(in), sig_figs)) : dup("");
+}
+EMSCRIPTEN_KEEPALIVE char* gen_tikz_graph(const char* in, const char* filename, int sig_figs, const char* legend_pos, const char* scale_mode) {
+  if (!in || !filename) return dup("");
+  std::string lp = legend_pos ? legend_pos : "north west";
+  std::string sm = scale_mode ? scale_mode : "linear";
+  return dup(to_tikz_graph(parse(in), filename, sig_figs, lp, sm));
 }
 }
