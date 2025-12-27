@@ -19,6 +19,7 @@ ConvertModule().then(M => {
   const genLatexSigFigs = M.cwrap('gen_latex_sig_figs', 'number', ['string', 'number']);
   const genCsvSigFigs = M.cwrap('gen_csv_sig_figs', 'number', ['string', 'number']);
   const genTikzGraph = M.cwrap('gen_tikz_graph', 'number', ['string', 'string', 'number', 'string', 'string']);
+  const genTikzGraphPreview = M.cwrap('gen_tikz_graph_preview', 'number', ['string', 'number', 'string', 'string']);
   
   const getRoundMode = () => {
     const selected = document.querySelector('input[name="round-mode"]:checked');
@@ -65,13 +66,19 @@ ConvertModule().then(M => {
   };
   
   previewBtn.onclick = () => {
-    const tikzCode = tikz.value.trim();
-    if (tikzCode) {
-      // TikZコードからtikzpicture部分を抽出
+    const data = input.value.trim();
+    if (data) {
+      const sf = parseInt(sigFigs.value) || 3;
+      const lp = legendPos.value || 'north west';
+      const sm = scaleMode.value || 'linear';
+      
+      // プレビュー用のTikZコード（データ埋め込み）を生成
+      const previewCode = call(genTikzGraphPreview(data, sf, lp, sm));
+      
       tikzPreview.innerHTML = '';
       const script = document.createElement('script');
       script.type = 'text/tikz';
-      script.textContent = tikzCode;
+      script.textContent = previewCode;
       tikzPreview.appendChild(script);
       
       // TikZJaxを再実行してレンダリング

@@ -293,6 +293,121 @@ std::string to_tikz_graph(const Table &t, const std::string &filename, int sig_f
   return out;
 }
 
+std::string to_tikz_graph_preview(const Table &t, int sig_figs, const std::string &legend_pos, const std::string &scale_mode) {
+  if (t.empty()) return "";
+  
+  size_t num_cols = t[0].size();
+  if (num_cols < 2) return ""; // 少なくとも2列必要（x軸とy軸）
+  if (sig_figs < 1) sig_figs = 3;
+  
+  // データの最小値・最大値を計算
+  double x_min = 1e100, x_max = -1e100;
+  double y_min = 1e100, y_max = -1e100;
+  
+  for (const auto &row : t) {
+    if (row.size() >= 2) {
+      if (is_number(row[0])) {
+        double x_val = std::stod(row[0]);
+        x_min = std::min(x_min, x_val);
+        x_max = std::max(x_max, x_val);
+      }
+      for (size_t i = 1; i < row.size(); ++i) {
+        if (is_number(row[i])) {
+          double y_val = std::stod(row[i]);
+          y_min = std::min(y_min, y_val);
+          y_max = std::max(y_max, y_val);
+        }
+      }
+    }
+  }
+  
+  int xmin_val = (int)std::floor(x_min);
+  int xmax_val = (int)std::floor(x_max) + 1;
+  int ymin_val = (int)std::floor(y_min);
+  int ymax_val = (int)std::floor(y_max) + 1;
+  
+  std::string out = "\\begin{tikzpicture}\n";
+  out += "  \\begin{axis}[\n";
+  out += "    width=0.8\\textwidth,\n";
+  out += "    height=0.6\\textwidth,\n";
+  out += "    minor tick num=1,\n";
+  out += "    tick style={major tick length=5pt, minor tick length=3pt, tick pos=both, color=black, line width=0.5pt},\n";
+  out += "    tick align=inside,\n";
+  out += "    xmajorgrids=false,\n";
+  out += "    ymajorgrids=false,\n";
+  out += "    xminorgrids=false,\n";
+  out += "    yminorgrids=false,\n";
+  out += "    axis line style={-},\n";
+  out += "    scaled ticks=false,\n";
+  out += "    legend cell align = {left},\n";
+  out += "    legend pos = ";
+  out += legend_pos;
+  out += ",\n";
+  
+  if (scale_mode == "semilog") {
+    out += "    ymode=log,\n";
+  } else if (scale_mode == "loglog") {
+    out += "    xmode=log,\n";
+    out += "    ymode=log,\n";
+  }
+  
+  out += "    xlabel={x軸},\n";
+  out += "    ylabel={y軸},\n";
+  out += "    xmin=";
+  out += std::to_string(xmin_val);
+  out += ", xmax=";
+  out += std::to_string(xmax_val);
+  out += ",\n";
+  out += "    ymin=";
+  out += std::to_string(ymin_val);
+  out += ", ymax=";
+  out += std::to_string(ymax_val);
+  out += ",\n";
+  
+  int x_step = (xmax_val - xmin_val) / 5;
+  int y_step = (ymax_val - ymin_val) / 5;
+  if (x_step < 1) x_step = 1;
+  if (y_step < 1) y_step = 1;
+  
+  out += "    xtick={";
+  for (int i = xmin_val; i <= xmax_val; i += x_step) {
+    if (i != xmin_val) out += ",";
+    out += std::to_string(i);
+  }
+  out += "},\n";
+  
+  out += "    ytick={";
+  for (int i = ymin_val; i <= ymax_val; i += y_step) {
+    if (i != ymin_val) out += ",";
+    out += std::to_string(i);
+  }
+  out += "}\n";
+  out += "  ]\n";
+  
+  // データを埋め込み形式で生成
+  for (size_t col = 1; col < num_cols; ++col) {
+    out += "    \\addplot [smooth, mark=*, draw] coordinates {\n";
+    for (const auto &row : t) {
+      if (row.size() > col && is_number(row[0]) && is_number(row[col])) {
+        out += "      (";
+        out += row[0];
+        out += ",";
+        out += row[col];
+        out += ")\n";
+      }
+    }
+    out += "    };\n";
+    out += "    \\addlegendentry{凡例";
+    out += std::to_string(col);
+    out += "}\n";
+  }
+  
+  out += "  \\end{axis}\n";
+  out += "\\end{tikzpicture}\n";
+  
+  return out;
+}
+
 char* dup(const std::string &s) {
   char *p = (char*)malloc(s.size() + 1);
   memcpy(p, s.c_str(), s.size() + 1);
@@ -317,5 +432,11 @@ EMSCRIPTEN_KEEPALIVE char* gen_tikz_graph(const char* in, const char* filename, 
   std::string lp = legend_pos ? legend_pos : "north west";
   std::string sm = scale_mode ? scale_mode : "linear";
   return dup(to_tikz_graph(parse(in), filename, sig_figs, lp, sm));
+}
+EMSCRIPTEN_KEEPALIVE char* gen_tikz_graph_preview(const char* in, int sig_figs, const char* legend_pos, const char* scale_mode) {
+  if (!in) return dup("");
+  std::string lp = legend_pos ? legend_pos : "north west";
+  std::string sm = scale_mode ? scale_mode : "linear";
+  return dup(to_tikz_graph_preview(parse(in), sig_figs, lp, sm));
 }
 }
