@@ -1,0 +1,77 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+h2, h3 {
+  color: #333;
+  border-bottom: 2px solid #4CAF50;
+  padding-bottom: 5px;
+}
+
+label {
+  display: inline-block;
+  margin: 10px 5px 5px 0;
+  font-weight: bold;
+  color: #555;
+}
+
+textarea, input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 15px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace;
+}
+
+input[type="number"] {
+  width: 100px;
+}
+
+fieldset {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 15px 0;
+  border-radius: 4px;
+  background-color: white;
+}
+
+legend {
+  font-weight: bold;
+  color: #4CAF50;
+  padding: 0 10px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  margin: 5px 5px 15px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+#tikz-preview {
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-height: 200px;
+  background: white;
+  border-radius: 4px;
+  overflow: auto;
+}
