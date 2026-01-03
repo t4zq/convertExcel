@@ -56,7 +56,8 @@ const csv = document.getElementById('csv');
 const tikz = document.getElementById('tikz');
 
 // %!TEX コメントからエンジンを抽出する関数（runlatex.jsベース）
-const engineregex = /% *!TEX.*[^a-zA-Z](((pdf|xe|lua|u?p)?latex(-dev)?)|asy|context|(pdf|xe|lua|[ou]?p)?tex) *\n/i;
+// uplatex, platexも対応
+const engineregex = /% *!TEX.*[^a-zA-Z](((pdf|xe|lua|u?p)?latex(-dev)?)|uplatex|platex|asy|context|(pdf|xe|lua|[ou]?p)?tex) *\n/i;
 const returnregex = /% *!TEX.*[^a-zA-Z](pdfjs|pdf|log|make4ht|latexml|lwarp) *\n/i;
 const bibregex = /% *!TEX.*[^a-zA-Z](p?bibtex8?|biber) *\n/i;
 const makeglossariesregex = /% *!TEX.*[^a-zA-Z](makeglossaries(-light)?) *\n/i;
@@ -309,7 +310,13 @@ async function compileLatex(texCode, engine = 'pdflatex', returnFormat = 'pdf') 
   const formData = new FormData();
   formData.append('filename[]', 'document.tex');
   formData.append('filecontents[]', texCode);
-  formData.append('engine', engine);
+  
+  // uplatexの場合はplatex-dvipdfmxとして送信
+  let apiEngine = engine;
+  if (engine === 'uplatex' || engine === 'platex') {
+    apiEngine = 'platex-dvipdfmx';
+  }
+  formData.append('engine', apiEngine);
   formData.append('return', returnFormat === 'log' ? 'log' : 'pdf');  // PDFまたはログ
   
   // bibtexサポート
@@ -466,16 +473,16 @@ if (latexPreviewBtn) {
       return;
     }
     
-    const fullTexCode = `\\documentclass[a4paper,12pt]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
+    // upLaTeXを使用して日本語対応
+    const fullTexCode = `% !TEX uplatex
+\\documentclass[uplatex,a4paper,12pt]{jsarticle}
 \\usepackage{amsmath,amssymb,amsfonts}
 \\usepackage{graphicx}
 \\usepackage{booktabs}
 \\usepackage{float}
 \\usepackage{xcolor}
-\\usepackage{hyperref}
-\\usepackage{geometry}
+\\usepackage[dvipdfmx]{hyperref}
+\\usepackage[dvipdfmx]{geometry}
 \\geometry{a4paper,margin=25mm}
 \\begin{document}
 ${texCode}
@@ -518,15 +525,15 @@ if (tikzPreviewBtn) {
       return;
     }
     
-    const fullTexCode = `\\documentclass[a4paper,12pt]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
+    // upLaTeXを使用して日本語対応
+    const fullTexCode = `% !TEX uplatex
+\\documentclass[uplatex,a4paper,12pt]{jsarticle}
 \\usepackage{amsmath,amssymb}
 \\usepackage{tikz}
 \\usepackage{pgfplots}
 \\usepackage{float}
 \\usepackage{xcolor}
-\\usepackage{geometry}
+\\usepackage[dvipdfmx]{geometry}
 \\geometry{a4paper,margin=25mm}
 \\pgfplotsset{compat=1.18}
 \\begin{document}
