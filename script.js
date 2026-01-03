@@ -114,359 +114,76 @@ function extractMakeIndex(texCode) {
   }
   return indices;
 }
-// PDF.jsを使用してPDFをレンダリング
-class PDFViewer {
-  constructor(containerId, prefix) {
-    this.container = document.getElementById(containerId);
-    this.prefix = prefix;
-    this.pdfDoc = null;
-    this.pageNum = 1;
-    this.pageCount = 0;
-    this.scale = 1.5;
-    this.rendering = false;
-    
-    // コントロール要素
-    this.prevBtn = document.getElementById(`${prefix}-prev`);
-    this.nextBtn = document.getElementById(`${prefix}-next`);
-    this.pageNumInput = document.getElementById(`${prefix}-page-num`);
-    this.pageCountSpan = document.getElementById(`${prefix}-page-count`);
-    this.zoomInBtn = document.getElementById(`${prefix}-zoom-in`);
-    this.zoomOutBtn = document.getElementById(`${prefix}-zoom-out`);
-    this.zoomSpan = document.getElementById(`${prefix}-zoom`);
-    this.canvasContainer = document.getElementById(`${prefix}-canvas-container`);
-    
-    this.setupEventListeners();
-  }
-  
-  setupEventListeners() {
-    if (this.prevBtn) {
-      this.prevBtn.addEventListener('click', () => {
-        if (this.pageNum <= 1) return;
-        this.pageNum--;
-        this.renderPage();
-      });
-    }
-    
-    if (this.nextBtn) {
-      this.nextBtn.addEventListener('click', () => {
-        if (this.pageNum >= this.pageCount) return;
-        this.pageNum++;
-        this.renderPage();
-      });
-    }
-    
-    if (this.pageNumInput) {
-      this.pageNumInput.addEventListener('change', (e) => {
-        let page = parseInt(e.target.value);
-        if (page < 1) page = 1;
-        if (page > this.pageCount) page = this.pageCount;
-        this.pageNum = page;
-        this.renderPage();
-      });
-    }
-    
-    if (this.zoomInBtn) {
-      this.zoomInBtn.addEventListener('click', () => {
-        this.scale += 0.25;
-        if (this.scale > 3) this.scale = 3;
-        this.updateZoomDisplay();
-        this.renderPage();
-      });
-    }
-    
-    if (this.zoomOutBtn) {
-      this.zoomOutBtn.addEventListener('click', () => {
-        this.scale -= 0.25;
-        if (this.scale < 0.5) this.scale = 0.5;
-        this.updateZoomDisplay();
-        this.renderPage();
-      });
-    }
-  }
-  
-  updateZoomDisplay() {
-    if (this.zoomSpan) {
-      this.zoomSpan.textContent = `${Math.round(this.scale * 100)}%`;
-    }
-  }
-  
-  updatePageControls() {
-    if (this.pageNumInput) this.pageNumInput.value = this.pageNum;
-    if (this.pageCountSpan) this.pageCountSpan.textContent = this.pageCount;
-    if (this.prevBtn) this.prevBtn.disabled = this.pageNum <= 1;
-    if (this.nextBtn) this.nextBtn.disabled = this.pageNum >= this.pageCount;
-    if (this.pageNumInput) {
-      this.pageNumInput.min = 1;
-      this.pageNumInput.max = this.pageCount;
-    }
-  }
-  
-  async loadPDF(pdfUrl) {
-    try {
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
-      this.pdfDoc = await loadingTask.promise;
-      this.pageCount = this.pdfDoc.numPages;
-      this.pageNum = 1;
-      this.updatePageControls();
-      this.updateZoomDisplay();
-      await this.renderAllPages();
-    } catch (error) {
-      console.error('PDF読み込みエラー:', error);
-      throw error;
-    }
-  }
-  
-  async renderPage() {
-    if (this.rendering) return;
-    this.rendering = true;
-    
-    try {
-      const page = await this.pdfDoc.getPage(this.pageNum);
-      const viewport = page.getViewport({ scale: this.scale });
-      
-      // 既存のcanvasを取得または新規作成
-      let canvas = this.canvasContainer.querySelector(`canvas[data-page="${this.pageNum}"]`);
-      if (!canvas) {
-        canvas = document.createElement('canvas');
-        canvas.className = 'pdf-canvas';
-        canvas.dataset.page = this.pageNum;
-      }
-      
-      const context = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-      };
-      
-      await page.render(renderContext).promise;
-      this.updatePageControls();
-    } catch (error) {
-      console.error(`ページ ${this.pageNum} のレンダリングエラー:`, error);
-    } finally {
-      this.rendering = false;
-    }
-  }
-  
-  async renderAllPages() {
-    this.canvasContainer.innerHTML = '';
-    
-    for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
-      try {
-        const page = await this.pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: this.scale });
-        
-        const canvas = document.createElement('canvas');
-        canvas.className = 'pdf-canvas';
-        canvas.dataset.page = pageNum;
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
-        this.canvasContainer.appendChild(canvas);
-      } catch (error) {
-        console.error(`ページ ${pageNum} のレンダリングエラー:`, error);
-      }
-    }
-    
-    this.updatePageControls();
-  }
-  
-  clear() {
-    this.canvasContainer.innerHTML = '';
-    this.pdfDoc = null;
-    this.pageNum = 1;
-    this.pageCount = 0;
-    this.updatePageControls();
-  }
-}
 
-// PDFビューアーインスタンス
-const latexPDFViewer = new PDFViewer('latex-pdf-canvas-container', 'latex-pdf');
-const tikzPDFViewer = new PDFViewer('tikz-pdf-canvas-container', 'tikz-pdf');
-// LaTeXコンパイル関数（texlive.net API使用）- runlatex.js拡張版
-async function compileLatex(texCode, engine = 'pdflatex', returnFormat = 'pdf') {
-  // %!TEX コメントからエンジンを自動抽出（指定がある場合は上書き）
+// フォーム送信によるLaTeXコンパイル（CORS回避）
+function submitLatexForm(formId, texCode, engine = 'pdflatex') {
+  const form = document.getElementById(formId);
+  form.innerHTML = '';
+  
+  // %!TEX コメントからエンジンを自動抽出
   const autoEngine = extractEngineFromTeX(texCode);
   if (autoEngine) {
     engine = autoEngine;
     console.log(`エンジンを自動検出: ${engine}`);
   }
   
-  // %!TEX return コメントから返却形式を抽出
-  const autoReturn = extractReturnFormat(texCode);
-  if (autoReturn !== 'pdfjs') {
-    returnFormat = autoReturn;
-  }
+  // ファイル内容
+  const fileContents = document.createElement('textarea');
+  fileContents.name = 'filecontents[]';
+  fileContents.textContent = texCode;
+  form.appendChild(fileContents);
   
-  const formData = new FormData();
-  formData.append('filename[]', 'document.tex');
-  formData.append('filecontents[]', texCode);
+  // ファイル名
+  const fileName = document.createElement('input');
+  fileName.type = 'hidden';
+  fileName.name = 'filename[]';
+  fileName.value = 'document.tex';
+  form.appendChild(fileName);
   
-  // uplatexの場合はplatex-dvipdfmxとして送信
-  let apiEngine = engine;
-  if (engine === 'uplatex' || engine === 'platex') {
-    apiEngine = 'platex-dvipdfmx';
-  }
-  formData.append('engine', apiEngine);
-  formData.append('return', returnFormat === 'log' ? 'log' : 'pdf');  // PDFまたはログ
+  // エンジン
+  const engineInput = document.createElement('input');
+  engineInput.type = 'hidden';
+  engineInput.name = 'engine';
+  engineInput.value = engine;
+  form.appendChild(engineInput);
+  
+  // 戻り形式（PDF.jsを使用）
+  const returnInput = document.createElement('input');
+  returnInput.type = 'hidden';
+  returnInput.name = 'return';
+  returnInput.value = 'pdfjs';
+  form.appendChild(returnInput);
   
   // bibtexサポート
   const bibcmd = extractBibCmd(texCode);
   if (bibcmd) {
-    formData.append('bibcmd', bibcmd);
-    console.log(`BibTeXコマンド: ${bibcmd}`);
+    const bibInput = document.createElement('input');
+    bibInput.type = 'hidden';
+    bibInput.name = 'bibcmd';
+    bibInput.value = bibcmd;
+    form.appendChild(bibInput);
   }
   
   // makeglossariesサポート
   const makegloss = extractMakeGlossaries(texCode);
   if (makegloss) {
-    formData.append('makeglossaries', makegloss);
-    console.log(`Makeglossaries: ${makegloss}`);
+    const glossInput = document.createElement('input');
+    glossInput.type = 'hidden';
+    glossInput.name = 'makeglossaries';
+    glossInput.value = makegloss;
+    form.appendChild(glossInput);
   }
   
-  // makeindexサポート（複数可能）
-  const makeindices = extractMakeIndex(texCode);
-  for (const idx of makeindices) {
-    formData.append('makeindex[]', idx);
-    console.log(`Makeindex: ${idx}`);
-  }
-  
-  try {
-    const response = await fetch('https://texlive.net/cgi-bin/latexcgi', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const contentType = response.headers.get('content-type') || '';
-    console.log('Response Content-Type:', contentType);
-    
-    // PDFが正常に返された場合
-    if (contentType.includes('application/pdf')) {
-      const blob = await response.blob();
-      console.log('PDF blob size:', blob.size);
-      return { success: true, pdfUrl: URL.createObjectURL(blob) };
-    }
-    
-    // エラーログが返された場合（text/plain）
-    if (contentType.includes('text/plain')) {
-      const log = await response.text();
-      console.error('Compilation log:', log);
-      
-      // ログファイルとして要求された場合は成功として扱う
-      if (returnFormat === 'log') {
-        return { success: true, isLog: true, log: log };
-      }
-      
-      return { success: false, error: 'コンパイルエラー', log: log };
-    }
-    
-    // その他のレスポンス（念のため）
-    const blob = await response.blob();
-    console.log('Unknown response type, blob size:', blob.size);
-    
-    // PDFかどうかを内容で判定（マジックナンバー）
-    const arrayBuffer = await blob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    const isPDF = bytes.length >= 4 && 
-                  bytes[0] === 0x25 && bytes[1] === 0x50 && 
-                  bytes[2] === 0x44 && bytes[3] === 0x46; // "%PDF"
-    
-    if (isPDF) {
-      console.log('Detected PDF by magic number');
-      return { success: true, pdfUrl: URL.createObjectURL(blob) };
-    }
-    
-    // PDFでない場合はエラーログとして扱う
-    const decoder = new TextDecoder('utf-8');
-    const log = decoder.decode(bytes);
-    console.error('Non-PDF response:', log.substring(0, 500));
-    return { success: false, error: 'コンパイルエラー', log: log };
-    
-  } catch (error) {
-    console.error('LaTeX compilation error:', error);
-    
-    let errorMsg = error.message;
-    if (error.name === 'TypeError' && errorMsg.includes('Failed to fetch')) {
-      errorMsg = 'ネットワークエラー: texlive.netに接続できません。\n\n考えられる原因:\n- インターネット接続の問題\n- サービスが一時的に利用不可\n- CORS制限（ローカルファイルからのアクセス）\n\nしばらく待ってから再度お試しください。';
-    }
-    
-    return { success: false, error: errorMsg };
-  }
-}
-
-// プレビュー表示の共通処理（PDF.js使用）
-async function showPreviewResult(result, previewElement, viewer, type) {
-  if (result.success) {
-    previewElement.style.display = 'block';
-    
-    // ログファイルの場合はテキストとして表示
-    if (result.isLog) {
-      const logContent = document.createElement('pre');
-      logContent.textContent = result.log;
-      logContent.style.cssText = 'background-color: #f5f5f5; padding: 1em; overflow: auto; max-height: 600px; border: 1px solid #ccc;';
-      
-      // 既存のコンテンツをクリアしてログを表示
-      viewer.container.parentElement.style.display = 'none';
-      const logContainer = previewElement.querySelector('.log-container') || document.createElement('div');
-      logContainer.className = 'log-container';
-      logContainer.innerHTML = '';
-      logContainer.appendChild(logContent);
-      if (!previewElement.querySelector('.log-container')) {
-        previewElement.appendChild(logContainer);
-      }
-    } else {
-      // PDFの場合：PDF.jsで読み込んで表示
-      viewer.container.parentElement.style.display = 'block';
-      const logContainer = previewElement.querySelector('.log-container');
-      if (logContainer) logContainer.style.display = 'none';
-      
-      try {
-        await viewer.loadPDF(result.pdfUrl);
-      } catch (error) {
-        alert(`PDFの読み込みに失敗しました: ${error.message}`);
-        return;
-      }
-    }
-    
-    // プレビューエリアが画面下部近くにある場合はスクロール
-    const rect = previewElement.getBoundingClientRect();
-    if (document.documentElement.clientHeight - rect.bottom < 50) {
-      window.scrollBy({ top: 150, behavior: 'smooth' });
-    }
-  } else {
-    let errorMessage = `${type}のコンパイルに失敗しました:\n\n${result.error}`;
-    if (result.log) {
-      console.error(`${type} Compilation Log:`, result.log);
-      errorMessage += '\n\n詳細なエラーログはコンソールを確認してください（F12キー）。';
-      const errorLines = result.log.split('\n')
-        .filter(line => line.includes('Error') || line.startsWith('!') || line.includes('l.'))
-        .slice(0, 10)
-        .join('\n');
-      if (errorLines) {
-        errorMessage += '\n\n主なエラー:\n' + errorLines;
-      }
-    }
-    alert(errorMessage);
-  }
+  // フォーム送信
+  form.submit();
 }
 
 // LaTeXプレビュー
 const latexPreviewBtn = document.getElementById('latex-preview-btn');
+const latexDeleteBtn = document.getElementById('latex-delete-btn');
+
 if (latexPreviewBtn) {
-  latexPreviewBtn.addEventListener('click', async () => {
+  latexPreviewBtn.addEventListener('click', () => {
     const texCode = editors.latex.getValue().trim();
     if (!texCode) {
       alert('LaTeXコードが空です。まずLaTeXボタンで出力を生成してください。');
@@ -490,35 +207,41 @@ ${texCode}
     
     const loading = document.getElementById('latex-loading');
     loading.classList.add('active');
-    loading.textContent = 'PDFをコンパイル中...';
-    latexPreviewBtn.disabled = true;
     
-    // タイムアウト警告（10秒後）
-    const timeoutWarning = setTimeout(() => {
-      loading.textContent = 'コンパイルに時間がかかっています... しばらくお待ちください';
-    }, 10000);
+    // フォーム送信
+    submitLatexForm('latex-form', fullTexCode, 'uplatex');
     
-    try {
-      const result = await compileLatex(fullTexCode, 'pdflatex');
-      clearTimeout(timeoutWarning);
-      await showPreviewResult(result, 
-        document.getElementById('latex-pdf-preview'),
-        latexPDFViewer,
-        'LaTeX'
-      );
-    } catch (error) {
-      alert('エラーが発生しました: ' + error.message);
-    } finally {
+    // プレビューを表示
+    document.getElementById('latex-pdf-preview').style.display = 'block';
+    latexDeleteBtn.style.display = 'inline-block';
+    
+    // ローディング解除（iframeが読み込まれたら）
+    const iframe = document.getElementById('latex-iframe');
+    iframe.onload = () => {
       loading.classList.remove('active');
-      latexPreviewBtn.disabled = false;
-    }
+    };
+    
+    // スクロール
+    setTimeout(() => {
+      document.getElementById('latex-pdf-preview').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  });
+}
+
+if (latexDeleteBtn) {
+  latexDeleteBtn.addEventListener('click', () => {
+    document.getElementById('latex-pdf-preview').style.display = 'none';
+    document.getElementById('latex-iframe').src = 'about:blank';
+    latexDeleteBtn.style.display = 'none';
   });
 }
 
 // TikZプレビュー
 const tikzPreviewBtn = document.getElementById('tikz-preview-btn');
+const tikzDeleteBtn = document.getElementById('tikz-delete-btn');
+
 if (tikzPreviewBtn) {
-  tikzPreviewBtn.addEventListener('click', async () => {
+  tikzPreviewBtn.addEventListener('click', () => {
     const texCode = editors.tikz.getValue().trim();
     if (!texCode) {
       alert('TikZコードが空です。まずTikZ グラフボタンで出力を生成してください。');
@@ -542,28 +265,32 @@ ${texCode}
     
     const loading = document.getElementById('tikz-loading');
     loading.classList.add('active');
-    loading.textContent = 'PDFをコンパイル中...';
-    tikzPreviewBtn.disabled = true;
     
-    // タイムアウト警告（15秒後 - TikZは時間がかかる可能性が高い）
-    const timeoutWarning = setTimeout(() => {
-      loading.textContent = 'TikZ/PGFplotsのコンパイルに時間がかかっています...';
-    }, 15000);
+    // フォーム送信
+    submitLatexForm('tikz-form', fullTexCode, 'uplatex');
     
-    try {
-      const result = await compileLatex(fullTexCode, 'pdflatex');
-      clearTimeout(timeoutWarning);
-      await showPreviewResult(result,
-        document.getElementById('tikz-pdf-preview'),
-        tikzPDFViewer,
-        'TikZ'
-      );
-    } catch (error) {
-      alert('エラーが発生しました: ' + error.message);
-    } finally {
+    // プレビューを表示
+    document.getElementById('tikz-pdf-preview').style.display = 'block';
+    tikzDeleteBtn.style.display = 'inline-block';
+    
+    // ローディング解除（iframeが読み込まれたら）
+    const iframe = document.getElementById('tikz-iframe');
+    iframe.onload = () => {
       loading.classList.remove('active');
-      tikzPreviewBtn.disabled = false;
-    }
+    };
+    
+    // スクロール
+    setTimeout(() => {
+      document.getElementById('tikz-pdf-preview').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  });
+}
+
+if (tikzDeleteBtn) {
+  tikzDeleteBtn.addEventListener('click', () => {
+    document.getElementById('tikz-pdf-preview').style.display = 'none';
+    document.getElementById('tikz-iframe').src = 'about:blank';
+    tikzDeleteBtn.style.display = 'none';
   });
 }
 

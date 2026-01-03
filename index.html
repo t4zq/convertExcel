@@ -59,24 +59,14 @@
 <textarea id="latex" style="display:none;"></textarea>
 <div class="preview-controls">
   <button id="latex-preview-btn">LaTeX PDFプレビュー</button>
+  <button id="latex-delete-btn" style="display:none;">プレビューを削除</button>
   <span id="latex-loading" class="loading-indicator">PDFをコンパイル中...</span>
 </div>
+<!-- iframeベースのプレビュー（CORS回避） -->
+<form id="latex-form" style="display:none;" method="post" action="https://texlive.net/cgi-bin/latexcgi" target="latex-iframe" enctype="multipart/form-data"></form>
 <div id="latex-pdf-preview" style="display:none;">
   <h4>LaTeX PDFプレビュー</h4>
-  <div id="latex-pdf-frame" class="pdf-preview">
-    <div class="pdf-controls">
-      <button id="latex-pdf-prev">前のページ</button>
-      <span>
-        <input type="number" id="latex-pdf-page-num" value="1" min="1"> / 
-        <span id="latex-pdf-page-count">0</span>
-      </span>
-      <button id="latex-pdf-next">次のページ</button>
-      <button id="latex-pdf-zoom-out">-</button>
-      <span id="latex-pdf-zoom">100%</span>
-      <button id="latex-pdf-zoom-in">+</button>
-    </div>
-    <div class="pdf-canvas-container" id="latex-pdf-canvas-container"></div>
-  </div>
+  <iframe id="latex-iframe" name="latex-iframe" class="pdf-iframe"></iframe>
 </div>
 <h3>CSV</h3>
 <label for="csv">CSV出力:</label><br>
@@ -88,24 +78,14 @@
 <textarea id="tikz" style="display:none;"></textarea><br>
 <div class="preview-controls">
   <button id="tikz-preview-btn">TikZ PDFプレビュー</button>
+  <button id="tikz-delete-btn" style="display:none;">プレビューを削除</button>
   <span id="tikz-loading" class="loading-indicator">PDFをコンパイル中...</span>
 </div>
+<!-- iframeベースのプレビュー（CORS回避） -->
+<form id="tikz-form" style="display:none;" method="post" action="https://texlive.net/cgi-bin/latexcgi" target="tikz-iframe" enctype="multipart/form-data"></form>
 <div id="tikz-pdf-preview" style="display:none;">
   <h4>TikZ PDFプレビュー</h4>
-  <div id="tikz-pdf-frame" class="pdf-preview">
-    <div class="pdf-controls">
-      <button id="tikz-pdf-prev">前のページ</button>
-      <span>
-        <input type="number" id="tikz-pdf-page-num" value="1" min="1"> / 
-        <span id="tikz-pdf-page-count">0</span>
-      </span>
-      <button id="tikz-pdf-next">次のページ</button>
-      <button id="tikz-pdf-zoom-out">-</button>
-      <span id="tikz-pdf-zoom">100%</span>
-      <button id="tikz-pdf-zoom-in">+</button>
-    </div>
-    <div class="pdf-canvas-container" id="tikz-pdf-canvas-container"></div>
-  </div>
+  <iframe id="tikz-iframe" name="tikz-iframe" class="pdf-iframe"></iframe>
 </div>
 <script src="dist/convert.js"></script>
 <script src="script.js"></script>
