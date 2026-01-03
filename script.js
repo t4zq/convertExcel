@@ -46,9 +46,9 @@ function setupEditor(editorId, textareaId, mode = 'ace/mode/text', readOnly = fa
 
 // 各エディタをセットアップ
 editors.input = setupEditor('input-editor', 'input', 'ace/mode/text', false);
-editors.latex = setupEditor('latex-editor', 'latex', 'ace/mode/latex', true);
-editors.csv = setupEditor('csv-editor', 'csv', 'ace/mode/text', true);
-editors.tikz = setupEditor('tikz-editor', 'tikz', 'ace/mode/latex', true);
+editors.latex = setupEditor('latex-editor', 'latex', 'ace/mode/latex', false);
+editors.csv = setupEditor('csv-editor', 'csv', 'ace/mode/text', false);
+editors.tikz = setupEditor('tikz-editor', 'tikz', 'ace/mode/latex', false);
 
 // DOM要素への参照
 const latex = document.getElementById('latex');
@@ -273,7 +273,7 @@ if (tikzPreviewBtn) {
       // upLaTeXを使用して日本語対応
       const fullTexCode = `% !TEX uplatex
 \\documentclass[a4paper,12pt,titlepage]{ltjsarticle}
-\\usepackage{amsmath,amssymb,amsfonts,mathtools,graphicx,xcolor,siunitx,floats}
+\\usepackage{amsmath,amssymb,amsfonts,mathtools,graphicx,xcolor,siunitx,floats,tikz}
 \\usepackage{pgfplots}
 \\usepackage{pgfplotstable}
 \\pgfplotsset{compat=1.18}
