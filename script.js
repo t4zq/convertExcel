@@ -193,7 +193,7 @@ if (latexPreviewBtn) {
     // upLaTeXを使用して日本語対応
     const fullTexCode = `% !TEX uplatex
 \\documentclass[uplatex,a4paper,12pt]{jsarticle}
-\\usepackage{amsmath,amssymb,amsfonts}
+\\usepackage{amsmath,amssymb,amsfonts,caption}
 \\usepackage{graphicx}
 \\usepackage{booktabs}
 \\usepackage{float}
@@ -278,9 +278,11 @@ if (tikzPreviewBtn) {
 \\usepackage{pgfplots}
 \\usepackage{float}
 \\usepackage{xcolor}
-\\usepackage[dvipdfmx]{geometry}
+\\usepackage[dvipdfmx]{graphicx}
 \\geometry{a4paper,margin=25mm}
+\\usepackage{pxpgfmark}
 \\pgfplotsset{compat=1.18}
+
 \\begin{document}
 ${tikzCode}
 \\end{document}`;
