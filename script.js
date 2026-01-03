@@ -279,7 +279,6 @@ if (tikzPreviewBtn) {
 \\usepackage{float}
 \\usepackage{xcolor}
 \\usepackage[dvipdfmx]{graphicx}
-\\geometry{a4paper,margin=25mm}
 \\usepackage{pxpgfmark}  
 \\pgfplotsset{compat=1.18}
 \\begin{document}
