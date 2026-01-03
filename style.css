@@ -1,11 +1,9 @@
-/* データ変換アプリ スタイルシート */
-
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #f9f9f9;
+  background: #f9f9f9;
 }
 
 h2 {
@@ -40,22 +38,20 @@ select {
 
 button {
   padding: 10px 20px;
-  background-color: #4a90d9;
-  color: white;
+  background: #4a90d9;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   margin: 5px;
   font-size: 14px;
-  transition: background-color 0.2s;
+  transition: background .2s;
 }
-
 button:hover {
-  background-color: #357abd;
+  background: #357abd;
 }
-
 button:disabled {
-  background-color: #999;
+  background: #999;
   cursor: not-allowed;
 }
 
@@ -76,8 +72,6 @@ legend {
 fieldset label {
   margin-right: 20px;
 }
-
-/* Aceエディタラッパー */
 .ace-editor-wrapper {
   position: relative;
   width: 100%;
@@ -91,8 +85,6 @@ fieldset label {
 .ace-editor-wrapper.tall {
   height: 350px;
 }
-
-/* PDFプレビュー */
 .pdf-preview {
   width: 100%;
   min-height: 600px;
@@ -145,26 +137,21 @@ fieldset label {
 }
 
 .pdf-controls button:disabled {
-  opacity: 0.5;
+  opacity: .5;
   cursor: not-allowed;
 }
-
 .pdf-controls input[type="number"] {
   width: 50px;
   padding: 5px;
   text-align: center;
   margin: 0;
 }
-
-/* プレビューコントロール */
 .preview-controls {
   margin: 10px 0;
   display: flex;
   gap: 10px;
   align-items: center;
 }
-
-/* ローディングインジケーター */
 .loading-indicator {
   display: none;
   color: #666;
@@ -174,8 +161,6 @@ fieldset label {
 .loading-indicator.active {
   display: inline-block;
 }
-
-/* ログコンテナ */
 .log-container {
   padding: 10px;
 }
@@ -191,8 +176,6 @@ fieldset label {
   font-size: 13px;
   line-height: 1.4;
 }
-
-/* PDF iframe */
 .pdf-iframe {
   width: 100%;
   height: 600px;
@@ -200,8 +183,6 @@ fieldset label {
   border-radius: 4px;
   background: #f5f5f5;
 }
-
-/* レスポンシブ */
 @media (max-width: 768px) {
   body {
     padding: 10px;

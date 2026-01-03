@@ -5,22 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>データ変換</title>
 <link rel="stylesheet" href="style.css">
-<!-- Ace Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ace.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ext-language_tools.js"></script>
-<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  // PDF.js workerを設定
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-</script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 </head>
 <body>
 <h2>データ変換</h2>
-
 <label for="input">入力データ:</label><br>
 <div id="input-editor" class="ace-editor-wrapper"></div>
-<textarea id="input" style="display:none;"></textarea><br>
+<textarea id="input" style="display:none;"></textarea>
 <fieldset>
   <label><input type="radio" name="round-mode" value="none" checked> 変更なし</label>
   <label><input type="radio" name="round-mode" value="decimal"> 小数点以下の桁数</label>
@@ -29,10 +23,10 @@
 <label for="decimals">小数点以下桁数:</label>
 <input type="number" id="decimals" min="0" value="2">
 <label for="sig-figs">有効数字:</label>
-<input type="number" id="sig-figs" min="1" value="3"><br>
+<input type="number" id="sig-figs" min="1" value="3">
 <button id="latex-btn">LaTeX</button>
 <button id="csv-btn">CSV</button>
-<button id="tikz-btn">TikZ グラフ</button><br>
+<button id="tikz-btn">TikZ グラフ</button>
 <label for="filename">ファイル名 (TikZ用):</label>
 <input type="text" id="filename" value="data" placeholder="data">
 <label for="legend-pos">凡例位置:</label>
@@ -61,7 +55,6 @@
   <button id="latex-delete-btn" style="display:none;">プレビューを削除</button>
   <span id="latex-loading" class="loading-indicator">PDFをコンパイル中...</span>
 </div>
-<!-- iframeベースのプレビュー（CORS回避） -->
 <form id="latex-form" style="display:none;" method="post" action="https://texlive.net/cgi-bin/latexcgi" target="latex-iframe" enctype="multipart/form-data"></form>
 <div id="latex-pdf-preview" style="display:none;">
   <h4>LaTeX PDFプレビュー</h4>
@@ -74,13 +67,12 @@
 <h3>TikZ グラフ</h3>
 <label for="tikz">TikZ グラフ出力:</label><br>
 <div id="tikz-editor" class="ace-editor-wrapper tall"></div>
-<textarea id="tikz" style="display:none;"></textarea><br>
+<textarea id="tikz" style="display:none;"></textarea>
 <div class="preview-controls">
   <button id="tikz-preview-btn">TikZ PDFプレビュー</button>
   <button id="tikz-delete-btn" style="display:none;">プレビューを削除</button>
   <span id="tikz-loading" class="loading-indicator">PDFをコンパイル中...</span>
 </div>
-<!-- iframeベースのプレビュー（CORS回避） -->
 <form id="tikz-form" style="display:none;" method="post" action="https://texlive.net/cgi-bin/latexcgi" target="tikz-iframe" enctype="multipart/form-data"></form>
 <div id="tikz-pdf-preview" style="display:none;">
   <h4>TikZ PDFプレビュー</h4>
