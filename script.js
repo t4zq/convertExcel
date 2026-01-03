@@ -80,6 +80,27 @@ const tikzPdfFrame = document.getElementById('tikz-pdf-frame');
 
 // texlive.netでLaTeXをコンパイルする関数
 async function compileLatex(texCode, engine = 'pdflatex') {
+  // まずlatexonline.ccを試す（CORS対応が良好）
+  try {
+    const response = await fetch('https://latexonline.cc/compile?command=' + encodeURIComponent(engine), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-tar'
+      },
+      body: texCode,
+      mode: 'cors'
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      return { success: true, pdfUrl: url };
+    }
+  } catch (error) {
+    console.warn('latexonline.cc failed, trying texlive.net...', error);
+  }
+  
+  // latexonline.ccが失敗した場合、texlive.netを試す
   const formData = new FormData();
   
   // ファイル名とコンテンツを設定
@@ -89,28 +110,34 @@ async function compileLatex(texCode, engine = 'pdflatex') {
   // エンジンを設定
   formData.append('engine', engine);
   
-  // PDF.jsを使用したプレビューを要求
-  formData.append('return', 'pdfjs');
+  // PDFバイナリとして受け取る
+  formData.append('return', 'pdf');
   
   try {
     const response = await fetch('https://texlive.net/cgi-bin/latexcgi', {
       method: 'POST',
-      body: formData
+      body: formData,
+      mode: 'cors'
     });
     
     if (!response.ok) {
-      // エラーレスポンスのテキストを取得
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status}\n${errorText}`);
     }
     
-    // レスポンスがHTMLの場合（PDF.jsビューア）
     const contentType = response.headers.get('content-type');
+    
+    // PDFの場合
+    if (contentType && contentType.includes('application/pdf')) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      return { success: true, pdfUrl: url };
+    }
+    
+    // HTMLレスポンス（エラーログを含む可能性）
     if (contentType && contentType.includes('text/html')) {
       const html = await response.text();
-      // エラーメッセージが含まれているかチェック
       if (html.includes('LaTeX Error') || html.includes('! ')) {
-        // HTMLからエラーログを抽出
         const errorMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
         const errorLog = errorMatch ? errorMatch[1] : html;
         return { success: false, error: 'コンパイルエラー', log: errorLog };
@@ -118,14 +145,22 @@ async function compileLatex(texCode, engine = 'pdflatex') {
       return { success: true, html: html };
     }
     
-    // PDFバイナリの場合
+    // その他のレスポンス
     const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    return { success: true, pdfUrl: url };
+    if (blob.size > 0) {
+      const url = URL.createObjectURL(blob);
+      return { success: true, pdfUrl: url };
+    }
+    
+    throw new Error('有効なレスポンスを受信できませんでした');
     
   } catch (error) {
     console.error('LaTeX compilation error:', error);
-    return { success: false, error: error.message };
+    let errorMsg = error.message;
+    if (error.name === 'TypeError' && errorMsg.includes('Failed to fetch')) {
+      errorMsg = 'ネットワークエラー: LaTeXコンパイルサービスに接続できません。\n\n考えられる原因:\n- インターネット接続の問題\n- LaTeXコンパイルサービスが利用不可\n- CORS制限\n\nしばらく待ってから再度お試しください。';
+    }
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -206,7 +241,7 @@ if (tikzPreviewBtn) {
     }
     
     // TikZコードを完全なLaTeXドキュメントにラップ
-    const fullTexCode = `\\documentclass[a4paper,12pt,titlepage]{ltjsarticle}
+    const fullTexCode = `\\documentclass[a4paper,12pt]{article}
 \\usepackage[utf8]{inputenc}
 \\usepackage{tikz}
 \\usepackage{pgfplots}
