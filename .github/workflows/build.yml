@@ -30,7 +30,7 @@ jobs:
           -s WASM=1 \
           -s MODULARIZE=1 \
           -s EXPORT_NAME=ConvertModule \
-          -s EXPORTED_FUNCTIONS='[_gen_latex,_gen_csv,_free]' \
+          -s EXPORTED_FUNCTIONS='[_gen_latex,_gen_csv,_gen_latex_rounded,_gen_latex_sig_figs,_gen_tikz_graph,_gen_tikz_graph_preview,_free]' \
           -s EXPORTED_RUNTIME_METHODS='["cwrap","UTF8ToString"]' \
           -o dist/convert.js
     

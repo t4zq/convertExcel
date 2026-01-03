@@ -43,6 +43,55 @@
 </head>
 <body>
 <h2>データ変換</h2>
+
+<details style="margin-bottom: 1em; padding: 1em; background-color: #f5f5ff; border: 1px solid #ddd;">
+  <summary style="cursor: pointer; font-weight: bold;">💡 使用方法とヒント</summary>
+  <div style="margin-top: 0.5em;">
+    <h3>%!TEX コメントについて</h3>
+    <p>LaTeXコードの先頭に特殊なコメントを書くことで、エンジンや処理を自動制御できます：</p>
+    
+    <h4>エンジン指定：</h4>
+    <ul>
+      <li><code>%!TEX lualatex</code> - LuaLaTeXを使用</li>
+      <li><code>%!TEX xelatex</code> - XeLaTeXを使用</li>
+      <li><code>%!TEX platex</code> - pLaTeXを使用</li>
+      <li><code>%!TEX uplatex</code> - upLaTeXを使用</li>
+    </ul>
+    
+    <h4>返却形式：</h4>
+    <ul>
+      <li><code>%!TEX log</code> - PDFの代わりにログファイルを表示</li>
+      <li><code>%!TEX pdf</code> - ブラウザのデフォルトPDFビューアで表示</li>
+    </ul>
+    
+    <h4>補助ツール：</h4>
+    <ul>
+      <li><code>%!TEX bibtex</code> - BibTeXを実行</li>
+      <li><code>%!TEX biber</code> - Biberを実行</li>
+      <li><code>%!TEX makeindex document</code> - MakeIndexを実行</li>
+      <li><code>%!TEX makeglossaries</code> - Makeglossariesを実行</li>
+    </ul>
+    
+    <p><strong>使用例：</strong></p>
+    <pre style="background-color: #eee; padding: 0.5em; margin: 0.5em 0;">%!TEX lualatex
+%!TEX bibtex
+\documentclass{article}
+\begin{document}
+Hello World!
+\cite{example}
+\bibliography{refs}
+\end{document}</pre>
+
+    <h4>自動エンジン検出：</h4>
+    <p>%!TEXコメントがなくても、以下の場合は自動的にエンジンが選択されます：</p>
+    <ul>
+      <li><code>\usepackage{fontspec}</code> → XeLaTeX</li>
+      <li><code>\directlua</code> → LuaLaTeX</li>
+      <li><code>pstricks</code> → LaTeX (DVI)</li>
+    </ul>
+  </div>
+</details>
+
 <label for="input">入力データ:</label><br>
 <div id="input-editor" class="ace-editor-wrapper"></div>
 <textarea id="input" style="display:none;"></textarea><br>
