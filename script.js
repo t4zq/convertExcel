@@ -278,7 +278,6 @@ if (tikzPreviewBtn) {
 \\usepackage{pgfplots}
 \\usepackage{float}
 \\usepackage{xcolor}
-\\usepackage[dvipdfmx]{graphicx}
 \\usepackage{pxpgfmark}  
 \\pgfplotsset{compat=1.18}
 \\begin{document}
