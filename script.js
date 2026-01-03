@@ -99,13 +99,22 @@ async function compileLatex(texCode, engine = 'pdflatex') {
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // エラーレスポンスのテキストを取得
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}\n${errorText}`);
     }
     
     // レスポンスがHTMLの場合（PDF.jsビューア）
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('text/html')) {
       const html = await response.text();
+      // エラーメッセージが含まれているかチェック
+      if (html.includes('LaTeX Error') || html.includes('! ')) {
+        // HTMLからエラーログを抽出
+        const errorMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+        const errorLog = errorMatch ? errorMatch[1] : html;
+        return { success: false, error: 'コンパイルエラー', log: errorLog };
+      }
       return { success: true, html: html };
     }
     
@@ -149,9 +158,23 @@ if (latexPreviewBtn) {
           latexPdfFrame.src = result.pdfUrl;
         }
       } else {
-        alert('LaTeXのコンパイルに失敗しました: ' + result.error);
+        // エラーメッセージを詳細に表示
+        let errorMessage = 'LaTeXのコンパイルに失敗しました:\n\n' + result.error;
+        if (result.log) {
+          console.error('LaTeX Compilation Log:', result.log);
+          errorMessage += '\n\n詳細なエラーログはコンソールを確認してください（F12キー）。';
+          // ログから重要なエラー行を抽出
+          const errorLines = result.log.split('\n').filter(line => 
+            line.includes('Error') || line.startsWith('!') || line.includes('l.')
+          ).slice(0, 10).join('\n');
+          if (errorLines) {
+            errorMessage += '\n\n主なエラー:\n' + errorLines;
+          }
+        }
+        alert(errorMessage);
       }
     } catch (error) {
+      console.error('LaTeX compilation error:', error);
       alert('エラーが発生しました: ' + error.message);
     } finally {
       // ローディング非表示
@@ -190,9 +213,23 @@ if (tikzPreviewBtn) {
           tikzPdfFrame.src = result.pdfUrl;
         }
       } else {
-        alert('TikZのコンパイルに失敗しました: ' + result.error);
+        // エラーメッセージを詳細に表示
+        let errorMessage = 'TikZのコンパイルに失敗しました:\n\n' + result.error;
+        if (result.log) {
+          console.error('TikZ Compilation Log:', result.log);
+          errorMessage += '\n\n詳細なエラーログはコンソールを確認してください（F12キー）。';
+          // ログから重要なエラー行を抽出
+          const errorLines = result.log.split('\n').filter(line => 
+            line.includes('Error') || line.startsWith('!') || line.includes('l.')
+          ).slice(0, 10).join('\n');
+          if (errorLines) {
+            errorMessage += '\n\n主なエラー:\n' + errorLines;
+          }
+        }
+        alert(errorMessage);
       }
     } catch (error) {
+      console.error('TikZ compilation error:', error);
       alert('エラーが発生しました: ' + error.message);
     } finally {
       // ローディング非表示
