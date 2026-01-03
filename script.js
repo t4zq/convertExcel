@@ -64,97 +64,143 @@ const filename = document.getElementById('filename');
 const legendPos = document.getElementById('legend-pos');
 const scaleMode = document.getElementById('scale-mode');
 
-// LaTeXプレビュー関連の要素
+// LaTeX PDF プレビュー機能
 const latexPreviewBtn = document.getElementById('latex-preview-btn');
-const latexClearPreviewBtn = document.getElementById('latex-clear-preview-btn');
-const latexPreviewLoading = document.getElementById('latex-preview-loading');
-const latexPreviewError = document.getElementById('latex-preview-error');
-const latexPreviewContainer = document.getElementById('latex-preview-container');
-const latexPreviewPdf = document.getElementById('latex-preview-pdf');
+const latexEngine = document.getElementById('latex-engine');
+const latexLoading = document.getElementById('latex-loading');
+const latexPdfPreview = document.getElementById('latex-pdf-preview');
+const latexPdfFrame = document.getElementById('latex-pdf-frame');
 
-// texlive.netを使ったLaTeXコンパイル関数
-async function compileLatexWithTexlive(latexCode) {
-  const url = 'https://texlive.net/cgi-bin/latexcgi';
-  
-  // LaTeXコードを完全なドキュメントとして包む
-  const fullDocument = `\\documentclass{article}
-\\usepackage{amsmath}
-\\usepackage{amssymb}
-\\usepackage{booktabs}
-\\usepackage{array}
-\\usepackage[margin=1in]{geometry}
-\\begin{document}
-${latexCode}
-\\end{document}`;
+// TikZ PDF プレビュー機能
+const tikzPreviewBtn = document.getElementById('tikz-preview-btn');
+const tikzEngine = document.getElementById('tikz-engine');
+const tikzLoading = document.getElementById('tikz-loading');
+const tikzPdfPreview = document.getElementById('tikz-pdf-preview');
+const tikzPdfFrame = document.getElementById('tikz-pdf-frame');
 
-  // フォームデータとして送信
+// texlive.netでLaTeXをコンパイルする関数
+async function compileLatex(texCode, engine = 'pdflatex') {
   const formData = new FormData();
-  formData.append('filecontents[]', fullDocument);
-  formData.append('filename[]', 'document.tex');
-  formData.append('engine', 'pdflatex');
-  formData.append('return', 'pdf');
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const contentType = response.headers.get('content-type');
   
-  // エラーメッセージの場合（テキスト）
-  if (contentType && contentType.includes('text/plain')) {
-    const errorText = await response.text();
-    throw new Error(errorText);
+  // ファイル名とコンテンツを設定
+  formData.append('filename[]', 'document.tex');
+  formData.append('filecontents[]', texCode);
+  
+  // エンジンを設定
+  formData.append('engine', engine);
+  
+  // PDF.jsを使用したプレビューを要求
+  formData.append('return', 'pdfjs');
+  
+  try {
+    const response = await fetch('https://texlive.net/cgi-bin/latexcgi', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    // レスポンスがHTMLの場合（PDF.jsビューア）
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      const html = await response.text();
+      return { success: true, html: html };
+    }
+    
+    // PDFバイナリの場合
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    return { success: true, pdfUrl: url };
+    
+  } catch (error) {
+    console.error('LaTeX compilation error:', error);
+    return { success: false, error: error.message };
   }
-
-  // PDFの場合
-  const blob = await response.blob();
-  return URL.createObjectURL(blob);
 }
 
 // LaTeXプレビューボタンのイベントハンドラ
-latexPreviewBtn.addEventListener('click', async () => {
-  const latexCode = editors.latex.getValue().trim();
-  
-  if (!latexCode) {
-    alert('LaTeXコードがありません。先にLaTeX変換を実行してください。');
-    return;
-  }
+if (latexPreviewBtn) {
+  latexPreviewBtn.addEventListener('click', async () => {
+    const texCode = editors.latex.getValue().trim();
+    
+    if (!texCode) {
+      alert('LaTeXコードが空です。まずLaTeXボタンで出力を生成してください。');
+      return;
+    }
+    
+    // ローディング表示
+    latexLoading.classList.add('active');
+    latexPreviewBtn.disabled = true;
+    
+    try {
+      const engine = latexEngine.value;
+      const result = await compileLatex(texCode, engine);
+      
+      if (result.success) {
+        latexPdfPreview.style.display = 'block';
+        
+        if (result.html) {
+          // HTMLレスポンス（PDF.js）の場合
+          latexPdfFrame.srcdoc = result.html;
+        } else if (result.pdfUrl) {
+          // PDFバイナリの場合
+          latexPdfFrame.src = result.pdfUrl;
+        }
+      } else {
+        alert('LaTeXのコンパイルに失敗しました: ' + result.error);
+      }
+    } catch (error) {
+      alert('エラーが発生しました: ' + error.message);
+    } finally {
+      // ローディング非表示
+      latexLoading.classList.remove('active');
+      latexPreviewBtn.disabled = false;
+    }
+  });
+}
 
-  // UIの状態をリセット
-  latexPreviewLoading.classList.add('active');
-  latexPreviewError.classList.remove('active');
-  latexPreviewContainer.style.display = 'none';
-  latexPreviewError.textContent = '';
-
-  try {
-    const pdfUrl = await compileLatexWithTexlive(latexCode);
-    latexPreviewPdf.src = pdfUrl;
-    latexPreviewContainer.style.display = 'block';
-  } catch (error) {
-    latexPreviewError.textContent = `コンパイルエラー:\n${error.message}`;
-    latexPreviewError.classList.add('active');
-  } finally {
-    latexPreviewLoading.classList.remove('active');
-  }
-});
-
-// プレビューをクリアするボタン
-latexClearPreviewBtn.addEventListener('click', () => {
-  latexPreviewContainer.style.display = 'none';
-  latexPreviewError.classList.remove('active');
-  latexPreviewPdf.src = '';
-  
-  // Blob URLを解放
-  if (latexPreviewPdf.src && latexPreviewPdf.src.startsWith('blob:')) {
-    URL.revokeObjectURL(latexPreviewPdf.src);
-  }
-});
-
+// TikZ PDFプレビューボタンのイベントハンドラ
+if (tikzPreviewBtn) {
+  tikzPreviewBtn.addEventListener('click', async () => {
+    const texCode = editors.tikz.getValue().trim();
+    
+    if (!texCode) {
+      alert('TikZコードが空です。まずTikZ グラフボタンで出力を生成してください。');
+      return;
+    }
+    
+    // ローディング表示
+    tikzLoading.classList.add('active');
+    tikzPreviewBtn.disabled = true;
+    
+    try {
+      const engine = tikzEngine.value;
+      const result = await compileLatex(texCode, engine);
+      
+      if (result.success) {
+        tikzPdfPreview.style.display = 'block';
+        
+        if (result.html) {
+          // HTMLレスポンス（PDF.js）の場合
+          tikzPdfFrame.srcdoc = result.html;
+        } else if (result.pdfUrl) {
+          // PDFバイナリの場合
+          tikzPdfFrame.src = result.pdfUrl;
+        }
+      } else {
+        alert('TikZのコンパイルに失敗しました: ' + result.error);
+      }
+    } catch (error) {
+      alert('エラーが発生しました: ' + error.message);
+    } finally {
+      // ローディング非表示
+      tikzLoading.classList.remove('active');
+      tikzPreviewBtn.disabled = false;
+    }
+  });
+}
 
 ConvertModule().then(M => {
   const call = (ptr) => { const s = M.UTF8ToString(ptr); M._free(ptr); return s; };
@@ -165,7 +211,6 @@ ConvertModule().then(M => {
   const genLatexSigFigs = M.cwrap('gen_latex_sig_figs', 'number', ['string', 'number']);
   const genCsvSigFigs = M.cwrap('gen_csv_sig_figs', 'number', ['string', 'number']);
   const genTikzGraph = M.cwrap('gen_tikz_graph', 'number', ['string', 'string', 'number', 'string', 'string']);
-  const genTikzGraphPreview = M.cwrap('gen_tikz_graph_preview', 'number', ['string', 'number', 'string', 'string']);
   
   const getRoundMode = () => {
     const selected = document.querySelector('input[name="round-mode"]:checked');
