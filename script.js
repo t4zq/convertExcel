@@ -272,7 +272,7 @@ if (tikzPreviewBtn) {
       
       // upLaTeXを使用して日本語対応
       const fullTexCode = `% !TEX uplatex
-\\documentclass[uplatex,a4paper,12pt]{jsarticle}
+\\documentclass[uplatex, a4paper, 12pt, dvipdfmx]{jsarticle}
 \\usepackage{amsmath,amssymb}
 \\usepackage{tikz}
 \\usepackage{pgfplots}
