@@ -468,14 +468,22 @@ if (latexPreviewBtn) {
     
     const fullTexCode = `\\documentclass[a4paper,12pt]{article}
 \\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage{amsmath,amssymb,amsfonts}
+\\usepackage{graphicx}
 \\usepackage{booktabs}
+\\usepackage{float}
+\\usepackage{xcolor}
+\\usepackage{hyperref}
+\\usepackage{geometry}
+\\geometry{a4paper,margin=25mm}
 \\begin{document}
 ${texCode}
 \\end{document}`;
     
     const loading = document.getElementById('latex-loading');
     loading.classList.add('active');
-    loading.textContent = 'PDFをコンパイル中... ⏳';
+    loading.textContent = 'PDFをコンパイル中...';
     latexPreviewBtn.disabled = true;
     
     // タイムアウト警告（10秒後）
@@ -484,16 +492,7 @@ ${texCode}
     }, 10000);
     
     try {
-      let engine = document.getElementById('latex-engine').value;
-      
-      // %!TEX コメントでエンジンが指定されているか確認
-      const autoEngine = extractEngineFromTeX(fullTexCode);
-      if (autoEngine) {
-        console.log(`%!TEX コメントによりエンジンを ${autoEngine} に設定`);
-        engine = autoEngine;
-      }
-      
-      const result = await compileLatex(fullTexCode, engine);
+      const result = await compileLatex(fullTexCode, 'pdflatex');
       clearTimeout(timeoutWarning);
       await showPreviewResult(result, 
         document.getElementById('latex-pdf-preview'),
@@ -521,9 +520,14 @@ if (tikzPreviewBtn) {
     
     const fullTexCode = `\\documentclass[a4paper,12pt]{article}
 \\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage{amsmath,amssymb}
 \\usepackage{tikz}
 \\usepackage{pgfplots}
 \\usepackage{float}
+\\usepackage{xcolor}
+\\usepackage{geometry}
+\\geometry{a4paper,margin=25mm}
 \\pgfplotsset{compat=1.18}
 \\begin{document}
 ${texCode}
@@ -531,7 +535,7 @@ ${texCode}
     
     const loading = document.getElementById('tikz-loading');
     loading.classList.add('active');
-    loading.textContent = 'PDFをコンパイル中... ⏳';
+    loading.textContent = 'PDFをコンパイル中...';
     tikzPreviewBtn.disabled = true;
     
     // タイムアウト警告（15秒後 - TikZは時間がかかる可能性が高い）
@@ -540,16 +544,7 @@ ${texCode}
     }, 15000);
     
     try {
-      let engine = document.getElementById('tikz-engine').value;
-      
-      // %!TEX コメントでエンジンが指定されているか確認
-      const autoEngine = extractEngineFromTeX(fullTexCode);
-      if (autoEngine) {
-        console.log(`%!TEX コメントによりエンジンを ${autoEngine} に設定`);
-        engine = autoEngine;
-      }
-      
-      const result = await compileLatex(fullTexCode, engine);
+      const result = await compileLatex(fullTexCode, 'pdflatex');
       clearTimeout(timeoutWarning);
       await showPreviewResult(result,
         document.getElementById('tikz-pdf-preview'),
