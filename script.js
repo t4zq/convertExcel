@@ -272,15 +272,12 @@ if (tikzPreviewBtn) {
       
       // upLaTeXを使用して日本語対応
       const fullTexCode = `% !TEX uplatex
-\\documentclass[uplatex,a4paper,12pt]{jsarticle}
-\\usepackage{amsmath,amssymb}
-\\usepackage{tikz}
+\\documentclass[a4paper,12pt,titlepage]{ltjsarticle}
+\\usepackage{amsmath,amssymb,amsfonts,mathtools,graphicx,xcolor,siunitx,floats}
 \\usepackage{pgfplots}
-\\usepackage{float}
-\\usepackage{xcolor}
-\\usepackage[dvipdfmx]{geometry}
-\\geometry{a4paper,margin=25mm}
+\\usepackage{pgfplotstable}
 \\pgfplotsset{compat=1.18}
+\\usepackage{luatexja-preset}
 \\begin{document}
 ${tikzCode}
 \\end{document}`;
