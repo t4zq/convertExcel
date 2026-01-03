@@ -8,6 +8,12 @@
 <!-- Ace Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ace.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ext-language_tools.js"></script>
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  // PDF.js workerを設定
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
 <style>
   .ace-editor-wrapper {
     position: relative;
@@ -21,9 +27,55 @@
   }
   .pdf-preview {
     width: 100%;
-    height: 600px;
+    min-height: 600px;
     border: 1px solid #ccc;
     background: #f5f5f5;
+    position: relative;
+    overflow: auto;
+  }
+  .pdf-canvas-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: #525659;
+  }
+  .pdf-canvas {
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    background: white;
+  }
+  .pdf-controls {
+    position: sticky;
+    top: 0;
+    background: #323639;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 10;
+  }
+  .pdf-controls button {
+    padding: 5px 15px;
+    background: #4a4a4a;
+    color: white;
+    border: 1px solid #666;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .pdf-controls button:hover {
+    background: #5a5a5a;
+  }
+  .pdf-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pdf-controls input[type="number"] {
+    width: 50px;
+    padding: 5px;
+    text-align: center;
   }
   .preview-controls {
     margin: 10px 0;
@@ -145,7 +197,20 @@ Hello World!
 </div>
 <div id="latex-pdf-preview" style="display:none;">
   <h4>LaTeX PDFプレビュー</h4>
-  <iframe id="latex-pdf-frame" class="pdf-preview"></iframe>
+  <div id="latex-pdf-frame" class="pdf-preview">
+    <div class="pdf-controls">
+      <button id="latex-pdf-prev">前のページ</button>
+      <span>
+        <input type="number" id="latex-pdf-page-num" value="1" min="1"> / 
+        <span id="latex-pdf-page-count">0</span>
+      </span>
+      <button id="latex-pdf-next">次のページ</button>
+      <button id="latex-pdf-zoom-out">-</button>
+      <span id="latex-pdf-zoom">100%</span>
+      <button id="latex-pdf-zoom-in">+</button>
+    </div>
+    <div class="pdf-canvas-container" id="latex-pdf-canvas-container"></div>
+  </div>
 </div>
 <h3>CSV</h3>
 <label for="csv">CSV出力:</label><br>
@@ -167,7 +232,20 @@ Hello World!
 </div>
 <div id="tikz-pdf-preview" style="display:none;">
   <h4>TikZ PDFプレビュー</h4>
-  <iframe id="tikz-pdf-frame" class="pdf-preview"></iframe>
+  <div id="tikz-pdf-frame" class="pdf-preview">
+    <div class="pdf-controls">
+      <button id="tikz-pdf-prev">前のページ</button>
+      <span>
+        <input type="number" id="tikz-pdf-page-num" value="1" min="1"> / 
+        <span id="tikz-pdf-page-count">0</span>
+      </span>
+      <button id="tikz-pdf-next">次のページ</button>
+      <button id="tikz-pdf-zoom-out">-</button>
+      <span id="tikz-pdf-zoom">100%</span>
+      <button id="tikz-pdf-zoom-in">+</button>
+    </div>
+    <div class="pdf-canvas-container" id="tikz-pdf-canvas-container"></div>
+  </div>
 </div>
 <script src="dist/convert.js"></script>
 <script src="script.js"></script>

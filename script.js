@@ -113,7 +113,184 @@ function extractMakeIndex(texCode) {
   }
   return indices;
 }
+// PDF.jsを使用してPDFをレンダリング
+class PDFViewer {
+  constructor(containerId, prefix) {
+    this.container = document.getElementById(containerId);
+    this.prefix = prefix;
+    this.pdfDoc = null;
+    this.pageNum = 1;
+    this.pageCount = 0;
+    this.scale = 1.5;
+    this.rendering = false;
+    
+    // コントロール要素
+    this.prevBtn = document.getElementById(`${prefix}-prev`);
+    this.nextBtn = document.getElementById(`${prefix}-next`);
+    this.pageNumInput = document.getElementById(`${prefix}-page-num`);
+    this.pageCountSpan = document.getElementById(`${prefix}-page-count`);
+    this.zoomInBtn = document.getElementById(`${prefix}-zoom-in`);
+    this.zoomOutBtn = document.getElementById(`${prefix}-zoom-out`);
+    this.zoomSpan = document.getElementById(`${prefix}-zoom`);
+    this.canvasContainer = document.getElementById(`${prefix}-canvas-container`);
+    
+    this.setupEventListeners();
+  }
+  
+  setupEventListeners() {
+    if (this.prevBtn) {
+      this.prevBtn.addEventListener('click', () => {
+        if (this.pageNum <= 1) return;
+        this.pageNum--;
+        this.renderPage();
+      });
+    }
+    
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', () => {
+        if (this.pageNum >= this.pageCount) return;
+        this.pageNum++;
+        this.renderPage();
+      });
+    }
+    
+    if (this.pageNumInput) {
+      this.pageNumInput.addEventListener('change', (e) => {
+        let page = parseInt(e.target.value);
+        if (page < 1) page = 1;
+        if (page > this.pageCount) page = this.pageCount;
+        this.pageNum = page;
+        this.renderPage();
+      });
+    }
+    
+    if (this.zoomInBtn) {
+      this.zoomInBtn.addEventListener('click', () => {
+        this.scale += 0.25;
+        if (this.scale > 3) this.scale = 3;
+        this.updateZoomDisplay();
+        this.renderPage();
+      });
+    }
+    
+    if (this.zoomOutBtn) {
+      this.zoomOutBtn.addEventListener('click', () => {
+        this.scale -= 0.25;
+        if (this.scale < 0.5) this.scale = 0.5;
+        this.updateZoomDisplay();
+        this.renderPage();
+      });
+    }
+  }
+  
+  updateZoomDisplay() {
+    if (this.zoomSpan) {
+      this.zoomSpan.textContent = `${Math.round(this.scale * 100)}%`;
+    }
+  }
+  
+  updatePageControls() {
+    if (this.pageNumInput) this.pageNumInput.value = this.pageNum;
+    if (this.pageCountSpan) this.pageCountSpan.textContent = this.pageCount;
+    if (this.prevBtn) this.prevBtn.disabled = this.pageNum <= 1;
+    if (this.nextBtn) this.nextBtn.disabled = this.pageNum >= this.pageCount;
+    if (this.pageNumInput) {
+      this.pageNumInput.min = 1;
+      this.pageNumInput.max = this.pageCount;
+    }
+  }
+  
+  async loadPDF(pdfUrl) {
+    try {
+      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      this.pdfDoc = await loadingTask.promise;
+      this.pageCount = this.pdfDoc.numPages;
+      this.pageNum = 1;
+      this.updatePageControls();
+      this.updateZoomDisplay();
+      await this.renderAllPages();
+    } catch (error) {
+      console.error('PDF読み込みエラー:', error);
+      throw error;
+    }
+  }
+  
+  async renderPage() {
+    if (this.rendering) return;
+    this.rendering = true;
+    
+    try {
+      const page = await this.pdfDoc.getPage(this.pageNum);
+      const viewport = page.getViewport({ scale: this.scale });
+      
+      // 既存のcanvasを取得または新規作成
+      let canvas = this.canvasContainer.querySelector(`canvas[data-page="${this.pageNum}"]`);
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'pdf-canvas';
+        canvas.dataset.page = this.pageNum;
+      }
+      
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport
+      };
+      
+      await page.render(renderContext).promise;
+      this.updatePageControls();
+    } catch (error) {
+      console.error(`ページ ${this.pageNum} のレンダリングエラー:`, error);
+    } finally {
+      this.rendering = false;
+    }
+  }
+  
+  async renderAllPages() {
+    this.canvasContainer.innerHTML = '';
+    
+    for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
+      try {
+        const page = await this.pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: this.scale });
+        
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-canvas';
+        canvas.dataset.page = pageNum;
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
+        this.canvasContainer.appendChild(canvas);
+      } catch (error) {
+        console.error(`ページ ${pageNum} のレンダリングエラー:`, error);
+      }
+    }
+    
+    this.updatePageControls();
+  }
+  
+  clear() {
+    this.canvasContainer.innerHTML = '';
+    this.pdfDoc = null;
+    this.pageNum = 1;
+    this.pageCount = 0;
+    this.updatePageControls();
+  }
+}
 
+// PDFビューアーインスタンス
+const latexPDFViewer = new PDFViewer('latex-pdf-canvas-container', 'latex-pdf');
+const tikzPDFViewer = new PDFViewer('tikz-pdf-canvas-container', 'tikz-pdf');
 // LaTeXコンパイル関数（texlive.net API使用）- runlatex.js拡張版
 async function compileLatex(texCode, engine = 'pdflatex', returnFormat = 'pdf') {
   // %!TEX コメントからエンジンを自動抽出（指定がある場合は上書き）
@@ -223,8 +400,8 @@ async function compileLatex(texCode, engine = 'pdflatex', returnFormat = 'pdf') 
   }
 }
 
-// プレビュー表示の共通処理（runlatex.jsのスクロール動作を参考）
-function showPreviewResult(result, previewElement, frameElement, type) {
+// プレビュー表示の共通処理（PDF.js使用）
+async function showPreviewResult(result, previewElement, viewer, type) {
   if (result.success) {
     previewElement.style.display = 'block';
     
@@ -235,20 +412,26 @@ function showPreviewResult(result, previewElement, frameElement, type) {
       logContent.style.cssText = 'background-color: #f5f5f5; padding: 1em; overflow: auto; max-height: 600px; border: 1px solid #ccc;';
       
       // 既存のコンテンツをクリアしてログを表示
-      frameElement.style.display = 'none';
-      const logContainer = frameElement.parentElement.querySelector('.log-container') || document.createElement('div');
+      viewer.container.parentElement.style.display = 'none';
+      const logContainer = previewElement.querySelector('.log-container') || document.createElement('div');
       logContainer.className = 'log-container';
       logContainer.innerHTML = '';
       logContainer.appendChild(logContent);
-      if (!frameElement.parentElement.querySelector('.log-container')) {
-        frameElement.parentElement.insertBefore(logContainer, frameElement);
+      if (!previewElement.querySelector('.log-container')) {
+        previewElement.appendChild(logContainer);
       }
     } else {
-      // PDFの場合
-      frameElement.style.display = 'block';
-      const logContainer = frameElement.parentElement.querySelector('.log-container');
+      // PDFの場合：PDF.jsで読み込んで表示
+      viewer.container.parentElement.style.display = 'block';
+      const logContainer = previewElement.querySelector('.log-container');
       if (logContainer) logContainer.style.display = 'none';
-      frameElement.src = result.pdfUrl;
+      
+      try {
+        await viewer.loadPDF(result.pdfUrl);
+      } catch (error) {
+        alert(`PDFの読み込みに失敗しました: ${error.message}`);
+        return;
+      }
     }
     
     // プレビューエリアが画面下部近くにある場合はスクロール
@@ -312,9 +495,9 @@ ${texCode}
       
       const result = await compileLatex(fullTexCode, engine);
       clearTimeout(timeoutWarning);
-      showPreviewResult(result, 
+      await showPreviewResult(result, 
         document.getElementById('latex-pdf-preview'),
-        document.getElementById('latex-pdf-frame'),
+        latexPDFViewer,
         'LaTeX'
       );
     } catch (error) {
@@ -368,9 +551,9 @@ ${texCode}
       
       const result = await compileLatex(fullTexCode, engine);
       clearTimeout(timeoutWarning);
-      showPreviewResult(result,
+      await showPreviewResult(result,
         document.getElementById('tikz-pdf-preview'),
-        document.getElementById('tikz-pdf-frame'),
+        tikzPDFViewer,
         'TikZ'
       );
     } catch (error) {
