@@ -21,6 +21,47 @@
   .ace-editor-wrapper.tall {
     height: 350px;
   }
+  .latex-preview-container {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background: white;
+    min-height: 400px;
+    position: relative;
+  }
+  .latex-preview-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #666;
+  }
+  .latex-preview-loading.active {
+    display: block;
+  }
+  .latex-preview-error {
+    display: none;
+    color: #d00;
+    padding: 10px;
+    background: #fee;
+    border-radius: 4px;
+    margin: 10px 0;
+    white-space: pre-wrap;
+    font-family: monospace;
+  }
+  .latex-preview-error.active {
+    display: block;
+  }
+  .latex-preview-pdf {
+    width: 100%;
+    height: 600px;
+    border: none;
+  }
+  .btn-group {
+    margin: 10px 0;
+  }
+  .btn-group button {
+    margin-right: 5px;
+  }
 </style>
 </head>
 <body>
@@ -64,6 +105,17 @@
 <label for="latex">LaTeX出力:</label><br>
 <div id="latex-editor" class="ace-editor-wrapper"></div>
 <textarea id="latex" style="display:none;"></textarea>
+<div class="btn-group">
+  <button id="latex-preview-btn">LaTeXプレビュー (PDF)</button>
+  <button id="latex-clear-preview-btn">プレビューをクリア</button>
+</div>
+<div id="latex-preview-loading" class="latex-preview-loading">
+  <p>コンパイル中...</p>
+</div>
+<div id="latex-preview-error" class="latex-preview-error"></div>
+<div id="latex-preview-container" class="latex-preview-container" style="display:none;">
+  <iframe id="latex-preview-pdf" class="latex-preview-pdf"></iframe>
+</div>
 <h3>CSV</h3>
 <label for="csv">CSV出力:</label><br>
 <div id="csv-editor" class="ace-editor-wrapper"></div>
@@ -72,9 +124,6 @@
 <label for="tikz">TikZ グラフ出力:</label><br>
 <div id="tikz-editor" class="ace-editor-wrapper tall"></div>
 <textarea id="tikz" style="display:none;"></textarea><br>
-<button id="preview-btn">プレビュー表示</button>
-<h3>TikZ プレビュー</h3>
-<div id="tikz-preview" style="border: 1px solid #ccc; padding: 10px; min-height: 200px; background: white;"></div>
 <script src="dist/convert.js"></script>
 <script src="script.js"></script>
 </body>

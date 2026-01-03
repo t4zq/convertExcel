@@ -63,8 +63,98 @@ const sigFigs = document.getElementById('sig-figs');
 const filename = document.getElementById('filename');
 const legendPos = document.getElementById('legend-pos');
 const scaleMode = document.getElementById('scale-mode');
-const previewBtn = document.getElementById('preview-btn');
-const tikzPreview = document.getElementById('tikz-preview');
+
+// LaTeXプレビュー関連の要素
+const latexPreviewBtn = document.getElementById('latex-preview-btn');
+const latexClearPreviewBtn = document.getElementById('latex-clear-preview-btn');
+const latexPreviewLoading = document.getElementById('latex-preview-loading');
+const latexPreviewError = document.getElementById('latex-preview-error');
+const latexPreviewContainer = document.getElementById('latex-preview-container');
+const latexPreviewPdf = document.getElementById('latex-preview-pdf');
+
+// texlive.netを使ったLaTeXコンパイル関数
+async function compileLatexWithTexlive(latexCode) {
+  const url = 'https://texlive.net/cgi-bin/latexcgi';
+  
+  // LaTeXコードを完全なドキュメントとして包む
+  const fullDocument = `\\documentclass{article}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
+\\usepackage{booktabs}
+\\usepackage{array}
+\\usepackage[margin=1in]{geometry}
+\\begin{document}
+${latexCode}
+\\end{document}`;
+
+  // フォームデータとして送信
+  const formData = new FormData();
+  formData.append('filecontents[]', fullDocument);
+  formData.append('filename[]', 'document.tex');
+  formData.append('engine', 'pdflatex');
+  formData.append('return', 'pdf');
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  
+  // エラーメッセージの場合（テキスト）
+  if (contentType && contentType.includes('text/plain')) {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
+
+  // PDFの場合
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
+// LaTeXプレビューボタンのイベントハンドラ
+latexPreviewBtn.addEventListener('click', async () => {
+  const latexCode = editors.latex.getValue().trim();
+  
+  if (!latexCode) {
+    alert('LaTeXコードがありません。先にLaTeX変換を実行してください。');
+    return;
+  }
+
+  // UIの状態をリセット
+  latexPreviewLoading.classList.add('active');
+  latexPreviewError.classList.remove('active');
+  latexPreviewContainer.style.display = 'none';
+  latexPreviewError.textContent = '';
+
+  try {
+    const pdfUrl = await compileLatexWithTexlive(latexCode);
+    latexPreviewPdf.src = pdfUrl;
+    latexPreviewContainer.style.display = 'block';
+  } catch (error) {
+    latexPreviewError.textContent = `コンパイルエラー:\n${error.message}`;
+    latexPreviewError.classList.add('active');
+  } finally {
+    latexPreviewLoading.classList.remove('active');
+  }
+});
+
+// プレビューをクリアするボタン
+latexClearPreviewBtn.addEventListener('click', () => {
+  latexPreviewContainer.style.display = 'none';
+  latexPreviewError.classList.remove('active');
+  latexPreviewPdf.src = '';
+  
+  // Blob URLを解放
+  if (latexPreviewPdf.src && latexPreviewPdf.src.startsWith('blob:')) {
+    URL.revokeObjectURL(latexPreviewPdf.src);
+  }
+});
+
 
 ConvertModule().then(M => {
   const call = (ptr) => { const s = M.UTF8ToString(ptr); M._free(ptr); return s; };
@@ -126,29 +216,6 @@ ConvertModule().then(M => {
       const result = call(genTikzGraph(data, fname, sf, lp, sm));
       editors.tikz.setValue(result, -1);
       tikz.value = result;
-    }
-  };
-  
-  previewBtn.onclick = () => {
-    const data = editors.input.getValue().trim();
-    if (data) {
-      const sf = parseInt(sigFigs.value) || 3;
-      const lp = legendPos.value || 'north west';
-      const sm = scaleMode.value || 'linear';
-      
-      // プレビュー用のTikZコード（データ埋め込み）を生成
-      const previewCode = call(genTikzGraphPreview(data, sf, lp, sm));
-      
-      tikzPreview.innerHTML = '';
-      const script = document.createElement('script');
-      script.type = 'text/tikz';
-      script.textContent = previewCode;
-      tikzPreview.appendChild(script);
-      
-      // TikZJaxを再実行してレンダリング
-      if (window.tikzjax) {
-        window.tikzjax.processTikz();
-      }
     }
   };
 });
