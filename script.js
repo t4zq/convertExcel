@@ -139,13 +139,24 @@ if (latexPreviewBtn) {
       return;
     }
     
+    // LaTeXテーブルを完全なドキュメントにラップ
+    const fullTexCode = `\\documentclass[a4paper,12pt]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage{booktabs}
+
+\\begin{document}
+
+${texCode}
+
+\\end{document}`;
+    
     // ローディング表示
     latexLoading.classList.add('active');
     latexPreviewBtn.disabled = true;
     
     try {
       const engine = latexEngine.value;
-      const result = await compileLatex(texCode, engine);
+      const result = await compileLatex(fullTexCode, engine);
       
       if (result.success) {
         latexPdfPreview.style.display = 'block';
@@ -194,13 +205,27 @@ if (tikzPreviewBtn) {
       return;
     }
     
+    // TikZコードを完全なLaTeXドキュメントにラップ
+    const fullTexCode = `\\documentclass[a4paper,12pt,titlepage]{ltjsarticle}
+\\usepackage[utf8]{inputenc}
+\\usepackage{tikz}
+\\usepackage{pgfplots}
+\\usepackage{float}
+\\pgfplotsset{compat=1.18}
+
+\\begin{document}
+
+${texCode}
+
+\\end{document}`;
+    
     // ローディング表示
     tikzLoading.classList.add('active');
     tikzPreviewBtn.disabled = true;
     
     try {
       const engine = tikzEngine.value;
-      const result = await compileLatex(texCode, engine);
+      const result = await compileLatex(fullTexCode, engine);
       
       if (result.success) {
         tikzPdfPreview.style.display = 'block';
