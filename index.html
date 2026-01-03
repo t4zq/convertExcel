@@ -7,11 +7,27 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
 <script src="https://tikzjax.com/v1/tikzjax.js"></script>
+<!-- Ace Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.5/ext-language_tools.js"></script>
+<style>
+  .ace-editor-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
+  .ace-editor-wrapper.tall {
+    height: 350px;
+  }
+</style>
 </head>
 <body>
 <h2>データ変換</h2>
 <label for="input">入力データ:</label><br>
-<textarea id="input" rows="8" placeholder="データを貼り付け"></textarea><br>
+<div id="input-editor" class="ace-editor-wrapper"></div>
+<textarea id="input" style="display:none;"></textarea><br>
 <fieldset>
   <legend>丸め方式を選択:</legend>
   <label><input type="radio" name="round-mode" value="none" checked> 丸めなし</label>
@@ -46,13 +62,16 @@
 </select>
 <h3>LaTeX</h3>
 <label for="latex">LaTeX出力:</label><br>
-<textarea id="latex" rows="8" placeholder="LaTeX形式で出力されます"></textarea>
+<div id="latex-editor" class="ace-editor-wrapper"></div>
+<textarea id="latex" style="display:none;"></textarea>
 <h3>CSV</h3>
 <label for="csv">CSV出力:</label><br>
-<textarea id="csv" rows="8" placeholder="CSV形式で出力されます"></textarea>
+<div id="csv-editor" class="ace-editor-wrapper"></div>
+<textarea id="csv" style="display:none;"></textarea>
 <h3>TikZ グラフ</h3>
 <label for="tikz">TikZ グラフ出力:</label><br>
-<textarea id="tikz" rows="15" placeholder="TikZ/PGFPlotsグラフコードが出力されます"></textarea><br>
+<div id="tikz-editor" class="ace-editor-wrapper tall"></div>
+<textarea id="tikz" style="display:none;"></textarea><br>
 <button id="preview-btn">プレビュー表示</button>
 <h3>TikZ プレビュー</h3>
 <div id="tikz-preview" style="border: 1px solid #ccc; padding: 10px; min-height: 200px; background: white;"></div>

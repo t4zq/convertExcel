@@ -1,3 +1,59 @@
+// Aceエディタの初期化
+const editors = {};
+
+// エディタ設定を適用する関数
+function setupEditor(editorId, textareaId, mode = 'ace/mode/text', readOnly = false) {
+  const editor = ace.edit(editorId);
+  editor.setTheme('ace/theme/monokai');
+  editor.session.setMode(mode);
+  editor.setOptions({
+    fontSize: '14px',
+    showPrintMargin: false,
+    enableBasicAutocompletion: true,
+    enableLiveAutocompletion: true,
+    enableSnippets: true,
+    tabSize: 2,
+    useSoftTabs: true,
+    wrap: true,
+    readOnly: readOnly
+  });
+  
+  const textarea = document.getElementById(textareaId);
+  
+  // エディタの変更をtextareaに同期
+  editor.session.on('change', function() {
+    textarea.value = editor.getValue();
+  });
+  
+  // 初期値の設定
+  if (textarea.value) {
+    editor.setValue(textarea.value, -1);
+  }
+  
+  // placeholderの実装
+  const placeholders = {
+    'input': 'データを貼り付け',
+    'latex': 'LaTeX形式で出力されます',
+    'csv': 'CSV形式で出力されます',
+    'tikz': 'TikZ/PGFPlotsグラフコードが出力されます'
+  };
+  
+  if (placeholders[textareaId]) {
+    editor.setOptions({
+      placeholder: placeholders[textareaId]
+    });
+  }
+  
+  return editor;
+}
+
+// 各エディタをセットアップ
+editors.input = setupEditor('input-editor', 'input', 'ace/mode/text', false);
+editors.latex = setupEditor('latex-editor', 'latex', 'ace/mode/latex', true);
+editors.csv = setupEditor('csv-editor', 'csv', 'ace/mode/text', true);
+editors.tikz = setupEditor('tikz-editor', 'tikz', 'ace/mode/latex', true);
+
+// 元のDOM要素への参照（後方互換性のため）
 const input = document.getElementById('input');
 const latex = document.getElementById('latex');
 const csv = document.getElementById('csv');
@@ -27,46 +83,54 @@ ConvertModule().then(M => {
   };
   
   document.getElementById('latex-btn').onclick = () => {
-    const data = input.value.trim();
+    const data = editors.input.getValue().trim();
     if (data) {
       const mode = getRoundMode();
+      let result;
       if (mode === 'decimal') {
-        latex.value = call(genLatexRounded(data, parseInt(decimals.value) || 0));
+        result = call(genLatexRounded(data, parseInt(decimals.value) || 0));
       } else if (mode === 'sig-figs') {
-        latex.value = call(genLatexSigFigs(data, parseInt(sigFigs.value) || 1));
+        result = call(genLatexSigFigs(data, parseInt(sigFigs.value) || 1));
       } else {
-        latex.value = call(genLatex(data));
+        result = call(genLatex(data));
       }
+      editors.latex.setValue(result, -1);
+      latex.value = result;
     }
   };
   
   document.getElementById('csv-btn').onclick = () => {
-    const data = input.value.trim();
+    const data = editors.input.getValue().trim();
     if (data) {
       const mode = getRoundMode();
+      let result;
       if (mode === 'decimal') {
-        csv.value = call(genCsvRounded(data, parseInt(decimals.value) || 0));
+        result = call(genCsvRounded(data, parseInt(decimals.value) || 0));
       } else if (mode === 'sig-figs') {
-        csv.value = call(genCsvSigFigs(data, parseInt(sigFigs.value) || 1));
+        result = call(genCsvSigFigs(data, parseInt(sigFigs.value) || 1));
       } else {
-        csv.value = call(genCsv(data));
+        result = call(genCsv(data));
       }
+      editors.csv.setValue(result, -1);
+      csv.value = result;
     }
   };
   
   document.getElementById('tikz-btn').onclick = () => {
-    const data = input.value.trim();
+    const data = editors.input.getValue().trim();
     if (data) {
       const fname = filename.value.trim() || 'data';
       const sf = parseInt(sigFigs.value) || 3;
       const lp = legendPos.value || 'north west';
       const sm = scaleMode.value || 'linear';
-      tikz.value = call(genTikzGraph(data, fname, sf, lp, sm));
+      const result = call(genTikzGraph(data, fname, sf, lp, sm));
+      editors.tikz.setValue(result, -1);
+      tikz.value = result;
     }
   };
   
   previewBtn.onclick = () => {
-    const data = input.value.trim();
+    const data = editors.input.getValue().trim();
     if (data) {
       const sf = parseInt(sigFigs.value) || 3;
       const lp = legendPos.value || 'north west';
