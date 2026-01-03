@@ -242,14 +242,36 @@ const tikzDeleteBtn = document.getElementById('tikz-delete-btn');
 
 if (tikzPreviewBtn) {
   tikzPreviewBtn.addEventListener('click', () => {
-    const texCode = editors.tikz.getValue().trim();
-    if (!texCode) {
-      alert('TikZコードが空です。まずTikZ グラフボタンで出力を生成してください。');
+    // プレビュー用にデータ埋め込み版のTikZコードを生成
+    const data = editors.input.getValue().trim();
+    if (!data) {
+      alert('入力データが空です。まずデータを入力してください。');
       return;
     }
     
-    // upLaTeXを使用して日本語対応
-    const fullTexCode = `% !TEX uplatex
+    // WebAssemblyモジュールが初期化されるまで待機
+    ConvertModule().then(M => {
+      const call = (ptr) => { const s = M.UTF8ToString(ptr); M._free(ptr); return s; };
+      const genTikzGraphPreview = M.cwrap('gen_tikz_graph_preview', 'number', ['string', 'number', 'string', 'string']);
+      
+      const sigFigs = document.getElementById('sig-figs');
+      const legendPos = document.getElementById('legend-pos');
+      const scaleMode = document.getElementById('scale-mode');
+      
+      const sf = parseInt(sigFigs.value) || 3;
+      const lp = legendPos.value || 'north west';
+      const sm = scaleMode.value || 'linear';
+      
+      // プレビュー用のTikZコード（データ埋め込み版）を生成
+      const tikzCode = call(genTikzGraphPreview(data, sf, lp, sm));
+      
+      if (!tikzCode) {
+        alert('TikZコードの生成に失敗しました。データ形式を確認してください。');
+        return;
+      }
+      
+      // upLaTeXを使用して日本語対応
+      const fullTexCode = `% !TEX uplatex
 \\documentclass[uplatex,a4paper,12pt]{jsarticle}
 \\usepackage{amsmath,amssymb}
 \\usepackage{tikz}
@@ -260,29 +282,30 @@ if (tikzPreviewBtn) {
 \\geometry{a4paper,margin=25mm}
 \\pgfplotsset{compat=1.18}
 \\begin{document}
-${texCode}
+${tikzCode}
 \\end{document}`;
-    
-    const loading = document.getElementById('tikz-loading');
-    loading.classList.add('active');
-    
-    // フォーム送信
-    submitLatexForm('tikz-form', fullTexCode, 'uplatex');
-    
-    // プレビューを表示
-    document.getElementById('tikz-pdf-preview').style.display = 'block';
-    tikzDeleteBtn.style.display = 'inline-block';
-    
-    // ローディング解除（iframeが読み込まれたら）
-    const iframe = document.getElementById('tikz-iframe');
-    iframe.onload = () => {
-      loading.classList.remove('active');
-    };
-    
-    // スクロール
-    setTimeout(() => {
-      document.getElementById('tikz-pdf-preview').scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+      
+      const loading = document.getElementById('tikz-loading');
+      loading.classList.add('active');
+      
+      // フォーム送信
+      submitLatexForm('tikz-form', fullTexCode, 'uplatex');
+      
+      // プレビューを表示
+      document.getElementById('tikz-pdf-preview').style.display = 'block';
+      tikzDeleteBtn.style.display = 'inline-block';
+      
+      // ローディング解除（iframeが読み込まれたら）
+      const iframe = document.getElementById('tikz-iframe');
+      iframe.onload = () => {
+        loading.classList.remove('active');
+      };
+      
+      // スクロール
+      setTimeout(() => {
+        document.getElementById('tikz-pdf-preview').scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    });
   });
 }
 
