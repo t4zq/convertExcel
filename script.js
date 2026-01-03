@@ -58,9 +58,10 @@ const tikz = document.getElementById('tikz');
 // LaTeXコンパイル関数（texlive.net API使用）
 async function compileLatex(texCode, engine = 'pdflatex') {
   const formData = new FormData();
-  formData.append('filecontents[]', texCode);
   formData.append('filename[]', 'document.tex');
+  formData.append('filecontents[]', texCode);
   formData.append('engine', engine);
+  formData.append('return', 'pdf');  // PDFバイナリとして返す
   
   try {
     const response = await fetch('https://texlive.net/cgi-bin/latexcgi', {
@@ -72,34 +73,36 @@ async function compileLatex(texCode, engine = 'pdflatex') {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    // レスポンスをBlobとして取得
-    const blob = await response.blob();
-    
-    // Content-Typeを確認
     const contentType = response.headers.get('content-type') || '';
     
-    // PDFの場合
-    if (contentType.includes('application/pdf') || blob.type === 'application/pdf') {
+    // PDFが正常に返された場合
+    if (contentType.includes('application/pdf')) {
+      const blob = await response.blob();
       return { success: true, pdfUrl: URL.createObjectURL(blob) };
     }
     
-    // HTMLレスポンス（エラーの可能性）
-    const text = await blob.text();
-    
-    // エラーメッセージの抽出
-    if (text.includes('LaTeX Error') || text.includes('! ')) {
-      const errorMatch = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
-      const errorLog = errorMatch ? errorMatch[1] : text;
-      return { success: false, error: 'コンパイルエラー', log: errorLog };
+    // エラーログが返された場合（text/plain）
+    if (contentType.includes('text/plain')) {
+      const log = await response.text();
+      return { success: false, error: 'コンパイルエラー', log: log };
     }
     
-    // PDFデータかどうかを確認（マジックナンバー）
-    if (text.startsWith('%PDF')) {
-      const pdfBlob = new Blob([text], { type: 'application/pdf' });
-      return { success: true, pdfUrl: URL.createObjectURL(pdfBlob) };
+    // その他のレスポンス（念のため）
+    const blob = await response.blob();
+    
+    // PDFかどうかを内容で判定（マジックナンバー）
+    const arrayBuffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const isPDF = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46; // "%PDF"
+    
+    if (isPDF) {
+      return { success: true, pdfUrl: URL.createObjectURL(blob) };
     }
     
-    throw new Error('コンパイルに失敗しました');
+    // PDFでない場合はエラーログとして扱う
+    const decoder = new TextDecoder('utf-8');
+    const log = decoder.decode(bytes);
+    return { success: false, error: 'コンパイルエラー', log: log };
     
   } catch (error) {
     console.error('LaTeX compilation error:', error);
