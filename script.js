@@ -193,7 +193,7 @@ if (latexPreviewBtn) {
     // upLaTeXを使用して日本語対応
     const fullTexCode = `% !TEX uplatex
 \\documentclass[uplatex,a4paper,12pt]{jsarticle}
-\\usepackage{amsmath,amssymb,amsfonts,caption}
+\\usepackage{amsmath,amssymb,amsfonts}
 \\usepackage{graphicx}
 \\usepackage{booktabs}
 \\usepackage{float}
