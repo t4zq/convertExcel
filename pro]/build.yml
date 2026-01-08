@@ -1,0 +1,51 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main, feature ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 'latest'
+    
+    - name: Create dist directory
+      run: mkdir -p dist
+    
+    - name: Build WASM
+      run: |
+        emcc convert.cpp -O3 \
+          -s WASM=1 \
+          -s MODULARIZE=1 \
+          -s EXPORT_NAME=ConvertModule \
+          -s EXPORTED_FUNCTIONS='[_gen_latex,_gen_csv,_gen_latex_rounded,_gen_latex_sig_figs,_gen_tikz_graph,_gen_tikz_graph_preview,_free]' \
+          -s EXPORTED_RUNTIME_METHODS='["cwrap","UTF8ToString"]' \
+          -o dist/convert.js
+    
+    - name: Commit and push if changed
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add dist/
+        git diff --staged --quiet || git commit -m "Auto-build WASM files"
+        
+        # Pull latest changes before pushing
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          git pull --rebase origin ${{ github.head_ref }}
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
+        else
+          git pull --rebase origin ${{ github.ref_name }}
+          git push origin HEAD:refs/heads/${{ github.ref_name }}
+        fi

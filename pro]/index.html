@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>データ変換</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<h2>データ変換</h2>
+<label for="input">入力データ:</label><br>
+<textarea id="input" rows="8" placeholder="データを貼り付け"></textarea><br>
+<fieldset>
+  <legend>丸め方式を選択:</legend>
+  <label><input type="radio" name="round-mode" value="none" checked> 丸めなし</label>
+  <label><input type="radio" name="round-mode" value="decimal"> 小数点以下の桁数</label>
+  <label><input type="radio" name="round-mode" value="sig-figs"> 有効数字</label>
+</fieldset>
+<label style="display:block;margin-top:8px;">
+  <input type="checkbox" id="scientific-only-table"> 表のみ指数表記（自動）
+</label>
+<label for="decimals">小数点以下桁数:</label>
+<input type="number" id="decimals" min="0" value="2">
+<label for="sig-figs">有効数字:</label>
+<input type="number" id="sig-figs" min="1" value="3"><br>
+<button id="latex-btn">LaTeX</button>
+<button id="csv-btn">CSV</button>
+<button id="tikz-btn">TikZ グラフ</button><br>
+<label for="filename">ファイル名 (TikZ用):</label>
+<input type="text" id="filename" value="data" placeholder="data">
+<label for="legend-pos">凡例位置:</label>
+<select id="legend-pos">
+  <option value="north west">north west</option>
+  <option value="north east">north east</option>
+  <option value="south west">south west</option>
+  <option value="south east">south east</option>
+  <option value="north">north</option>
+  <option value="south">south</option>
+  <option value="east">east</option>
+  <option value="west">west</option>
+</select>
+<label for="scale-mode">軸スケール:</label>
+<select id="scale-mode">
+  <option value="linear">線形</option>
+  <option value="semilog">片対数</option>
+  <option value="loglog">両対数</option>
+</select>
+<h3>LaTeX</h3>
+<label for="latex">LaTeX出力:</label><br>
+<textarea id="latex" rows="8" placeholder="LaTeX形式で出力されます"></textarea>
+<h3>CSV</h3>
+<label for="csv">CSV出力:</label><br>
+<textarea id="csv" rows="8" placeholder="CSV形式で出力されます"></textarea>
+<h3>TikZ グラフ</h3>
+<label for="tikz">TikZ グラフ出力:</label><br>
+<textarea id="tikz" rows="15" placeholder="TikZ/PGFPlotsグラフコードが出力されます"></textarea><br>
+<button id="preview-btn">プレビュー表示</button>
+<h3>TikZ プレビュー</h3>
+<div id="tikz-preview" style="border: 1px solid #ccc; padding: 10px; min-height: 200px; background: white;"></div>
+<div id="error-message" style="display:none; background:#ffebee; color:#c62828; padding:15px; margin:15px 0; border-radius:4px; border-left:4px solid #c62828;">
+  <strong>⚠️ エラー:</strong> <span id="error-text"></span>
+</div>
+<script src="dist/convert.js" onerror="document.getElementById('error-message').style.display='block'; document.getElementById('error-text').textContent='convert.js の読み込みに失敗しました。dist/ フォルダに convert.js と convert.wasm が必要です。README.md を参照してビルドしてください。';"></script>
+<script src="script.js"></script>
+</body>
+</html>
